@@ -85,7 +85,19 @@ void UIComponent::Run() {
                 if (selected_index >= 0 && selected_index < options.size()) {
                     fs::path selected_path = current_directory / options[selected_index];
                     if (selected_path.filename() == "..") {
-                        // Do not allow selecting '..'
+                        // Do not allow selecting '..' and go to prev folder
+                        if (selected_index >= 0 && selected_index < options.size()) {
+                            fs::path selected_path = current_directory / options[selected_index];
+                            if (fs::is_directory(selected_path)) {
+                                if (options[selected_index] == "..") {
+                                    current_directory = current_directory.parent_path();
+                                } else {
+                                    current_directory = selected_path;
+                                }
+                                LoadCurrentDirectory();
+                                return true; // Event handled
+                            }
+                        }
                         return false;
                     }
                     if (selected_paths.find(selected_path) != selected_paths.end()) {
