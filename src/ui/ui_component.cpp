@@ -143,12 +143,25 @@ void UIComponent::Run() {
         }) | border;
     });
 
+    // Create the instructions element
+    auto instructions = Renderer([&] {
+        return vbox({
+            separator(),
+            text("Instructions:") | bold,
+            text("↑/↓ Arrow Keys: Navigate"),
+            text("Enter: Select/Deselect"),
+            text("O/o: Enter/Exit Directory"),
+            text("Esc: Jump to 'Done' Button")
+        }) | border;
+    });
+
     // Arrange the components vertically without ESC handling
     auto container = Container::Vertical({
         custom_menu_with_events,
         display_selected,
         done_button,
-        exit_button
+        exit_button,
+        instructions // Add instructions to the container
     });
 
     // Add a CatchEvent around the container to handle ESC key globally
