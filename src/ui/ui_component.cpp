@@ -202,8 +202,6 @@ void UIComponent::Run() {
     // Create a renderer to include the current directory path and the container with ESC handling
     auto layout = Renderer(container_with_escape, [&] {
         return vbox({
-            text("Current Directory: " + current_directory.string()) | bold,
-            separator(),
             container_with_escape->Render()
         });
     });
