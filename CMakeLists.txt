@@ -1,4 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
+# ----------------------------
+# Optional: Print Configuration (Useful for Debugging)
+# ----------------------------
+
+# Display the configuration in the CMake output
+message(STATUS "Project Name: ${PROJECT_NAME}")
+message(STATUS "Executable Name: ${EXECUTABLE_NAME}")
+message(STATUS "Source Files: ${SOURCE_FILES}")
 
 # ----------------------------
 # Set Toolchain File
@@ -44,8 +52,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # ----------------------------
 
 # Find Packages and Components
-find_package(Boost REQUIRED COMPONENTS math)
 find_package(fmt REQUIRED)
+find_package(ftxui REQUIRED)
 
 # ----------------------------
 # Include Directories
@@ -66,7 +74,7 @@ add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
 # ----------------------------
 
 # Link Boost::math and fmt::fmt to the executable
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE Boost::math fmt::fmt)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE fmt::fmt ftxui::screen ftxui::dom ftxui::component)
 
 # ----------------------------
 # Optional: Print Configuration (Useful for Debugging)
