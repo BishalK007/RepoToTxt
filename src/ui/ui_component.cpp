@@ -79,8 +79,30 @@ void UIComponent::Run() {
         return vbox(menu_elements) | frame | border;
     });
 
-    // Handle events specific to the menu (excluding ESC)
+    // Handle events specific to the menu (including circular navigation)
     auto custom_menu_with_events = CatchEvent(custom_menu, [&](Event e) -> bool {
+        // Handle 'Up' arrow key for circular navigation
+        if (e == Event::ArrowUp) {
+            if (!options.empty()) {
+                if (selected_index == 0)
+                    selected_index = options.size() - 1;
+                else
+                    selected_index--;
+            }
+            return true; // Event handled
+        }
+
+        // Handle 'Down' arrow key for circular navigation
+        if (e == Event::ArrowDown) {
+            if (!options.empty()) {
+                if (selected_index == options.size() - 1)
+                    selected_index = 0;
+                else
+                    selected_index++;
+            }
+            return true; // Event handled
+        }
+
         // Handle 'Enter' key to toggle selection
         if (e == Event::Return) { // Enter key
             if (selected_index >= 0 && selected_index < options.size()) {
@@ -148,7 +170,7 @@ void UIComponent::Run() {
         return vbox({
             separator(),
             text("Instructions:") | bold,
-            text("↑/↓ Arrow Keys: Navigate"),
+            text("↑/↓ Arrow Keys: Navigate (Circular)"),
             text("Enter: Select/Deselect"),
             text("O/o: Enter/Exit Directory"),
             text("Esc: Jump to 'Done' Button")
