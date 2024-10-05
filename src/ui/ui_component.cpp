@@ -52,95 +52,78 @@ void UIComponent::Run() {
     });
 
     // Custom renderer to display ticks next to selected items and highlight the focused item
-    auto custom_menu = CatchEvent(
-        Renderer(menu, [&] {
-            Elements menu_elements;
-            for (size_t i = 0; i < options.size(); ++i) {
-                // Determine if the current item is selected
-                fs::path item_path = current_directory / options[i];
-                bool is_selected = selected_paths.find(item_path) != selected_paths.end();
-                std::string prefix = is_selected ? "✔ " : "  ";
-                
-                // Append '/' to directories for visual distinction, excluding '..'
-                std::string display_name = options[i];
-                if (fs::is_directory(item_path) && options[i] != "..") {
-                    display_name += "/";
-                }
-
-                // Create the line element with prefix and display name
-                Element line = text(prefix + display_name);
-
-                // Highlight the currently focused item using background color
-                if (static_cast<int>(i) == selected_index) {
-                    line = line | bgcolor(Color::Blue) | color(Color::White);
-                }
-
-                menu_elements.push_back(line);
-            }
-            return vbox(menu_elements) | frame | border;
-        }),
-        [&](Event e) {
-            // Handle 'Enter' key to toggle selection
-            if (e == Event::Return) { // Enter key
-                if (selected_index >= 0 && selected_index < options.size()) {
-                    fs::path selected_path = current_directory / options[selected_index];
-                    if (selected_path.filename() == "..") {
-                        // Do not allow selecting '..' and go to prev folder
-                        if (selected_index >= 0 && selected_index < options.size()) {
-                            fs::path selected_path = current_directory / options[selected_index];
-                            if (fs::is_directory(selected_path)) {
-                                if (options[selected_index] == "..") {
-                                    current_directory = current_directory.parent_path();
-                                } else {
-                                    current_directory = selected_path;
-                                }
-                                LoadCurrentDirectory();
-                                return true; // Event handled
-                            }
-                        }
-                        return false;
-                    }
-                    if (selected_paths.find(selected_path) != selected_paths.end()) {
-                        selected_paths.erase(selected_path);
-                    } else {
-                        selected_paths.insert(selected_path);
-                    }
-                }
-                return true; // Event handled
+    auto custom_menu = Renderer(menu, [&] {
+        Elements menu_elements;
+        for (size_t i = 0; i < options.size(); ++i) {
+            // Determine if the current item is selected
+            fs::path item_path = current_directory / options[i];
+            bool is_selected = selected_paths.find(item_path) != selected_paths.end();
+            std::string prefix = is_selected ? "✔ " : "  ";
+            
+            // Append '/' to directories for visual distinction, excluding '..'
+            std::string display_name = options[i];
+            if (fs::is_directory(item_path) && options[i] != "..") {
+                display_name += "/";
             }
 
-            // Handle 'o' or 'O' key to open directories
-            if (e.is_character()) {
-                std::string characters = e.character();
-                if (!characters.empty()) {
-                    char c = characters[0];
-                    if (c == 'o' || c == 'O') {
-                        if (selected_index >= 0 && selected_index < options.size()) {
-                            fs::path selected_path = current_directory / options[selected_index];
-                            if (fs::is_directory(selected_path)) {
-                                if (options[selected_index] == "..") {
-                                    current_directory = current_directory.parent_path();
-                                } else {
-                                    current_directory = selected_path;
-                                }
-                                LoadCurrentDirectory();
-                                return true; // Event handled
-                            }
-                        }
-                    }
-                }
+            // Create the line element with prefix and display name
+            Element line = text(prefix + display_name);
+
+            // Highlight the currently focused item using background color
+            if (static_cast<int>(i) == selected_index) {
+                line = line | bgcolor(Color::Blue) | color(Color::White);
             }
 
-            // Handle 'Esc' key to shift focus to the "Done" button
-            if (e == Event::Escape) { // Esc key
-                // Post a Tab event to shift focus to the next focusable component ("Done" button)
-                screen.PostEvent(Event::Tab);
-                return true; // Event handled
-            }
-
-            return false; // Event not handled
+            menu_elements.push_back(line);
         }
-    );
+        return vbox(menu_elements) | frame | border;
+    });
+
+    // Handle events specific to the menu (excluding ESC)
+    auto custom_menu_with_events = CatchEvent(custom_menu, [&](Event e) -> bool {
+        // Handle 'Enter' key to toggle selection
+        if (e == Event::Return) { // Enter key
+            if (selected_index >= 0 && selected_index < options.size()) {
+                fs::path selected_path = current_directory / options[selected_index];
+                if (selected_path.filename() == "..") {
+                    // Navigate to parent directory
+                    current_directory = current_directory.parent_path();
+                    LoadCurrentDirectory();
+                    return true; // Event handled
+                }
+                if (selected_paths.find(selected_path) != selected_paths.end()) {
+                    selected_paths.erase(selected_path);
+                } else {
+                    selected_paths.insert(selected_path);
+                }
+            }
+            return true; // Event handled
+        }
+
+        // Handle 'o' or 'O' key to open directories
+        if (e.is_character()) {
+            std::string characters = e.character();
+            if (!characters.empty()) {
+                char c = characters[0];
+                if (c == 'o' || c == 'O') {
+                    if (selected_index >= 0 && selected_index < options.size()) {
+                        fs::path selected_path = current_directory / options[selected_index];
+                        if (fs::is_directory(selected_path)) {
+                            if (options[selected_index] == "..") {
+                                current_directory = current_directory.parent_path();
+                            } else {
+                                current_directory = selected_path;
+                            }
+                            LoadCurrentDirectory();
+                            return true; // Event handled
+                        }
+                    }
+                }
+            }
+        }
+
+        return false; // Event not handled here
+    });
 
     // Renderer to display selected items in real-time with '/' appended to directories
     auto display_selected = Renderer([&] {
@@ -160,20 +143,33 @@ void UIComponent::Run() {
         }) | border;
     });
 
-    // Arrange the components vertically with proper focus management
+    // Arrange the components vertically without ESC handling
     auto container = Container::Vertical({
-        custom_menu,
+        custom_menu_with_events,
         display_selected,
         done_button,
         exit_button
     });
 
-    // Create a renderer to include the current directory path
-    auto layout = Renderer(container, [&] {
+    // Add a CatchEvent around the container to handle ESC key globally
+    auto container_with_escape = CatchEvent(container, [&](Event e) -> bool {
+        if (e == Event::Escape) { // If ESC key is pressed
+            if(menu->Focused()) {
+                done_button->TakeFocus(); // Shift focus to 'Done' button
+            } else {
+                menu->TakeFocus();
+            }
+            return true; // Indicate that the event has been handled
+        }
+        return false; // Let other events be handled normally
+    });
+
+    // Create a renderer to include the current directory path and the container with ESC handling
+    auto layout = Renderer(container_with_escape, [&] {
         return vbox({
             text("Current Directory: " + current_directory.string()) | bold,
             separator(),
-            container->Render()
+            container_with_escape->Render()
         });
     });
 
