@@ -42,8 +42,14 @@ void UIComponent::Run() {
     // Create the menu component
     auto menu = Menu(&options, &selected_index);
 
-    // Create the "Done" button
-    auto done_button = Button("Done", [&] { screen.ExitLoopClosure()(); });
+    // Create the "Done" button that prints selected items
+    auto done_button = Button("Done", [&] {
+        std::cout << "Selected items:" << std::endl;
+        for (const auto& path : selected_paths) {
+            std::cout << path.string() << std::endl;
+        }
+        screen.ExitLoopClosure()(); 
+    });
 
     // Create the "Exit" button
     auto exit_button = Button("Exit", [&] { 
@@ -51,103 +57,7 @@ void UIComponent::Run() {
         screen.ExitLoopClosure()(); 
     });
 
-    // Custom renderer to display ticks next to selected items and highlight the focused item
-    auto custom_menu = Renderer(menu, [&] {
-        Elements menu_elements;
-        for (size_t i = 0; i < options.size(); ++i) {
-            // Determine if the current item is selected
-            fs::path item_path = current_directory / options[i];
-            bool is_selected = selected_paths.find(item_path) != selected_paths.end();
-            std::string prefix = is_selected ? "✔ " : "  ";
-            
-            // Append '/' to directories for visual distinction, excluding '..'
-            std::string display_name = options[i];
-            if (fs::is_directory(item_path) && options[i] != "..") {
-                display_name += "/";
-            }
-
-            // Create the line element with prefix and display name
-            Element line = text(prefix + display_name);
-
-            // Highlight the currently focused item using background color
-            if (static_cast<int>(i) == selected_index) {
-                line = line | bgcolor(Color::Blue) | color(Color::White);
-            }
-
-            menu_elements.push_back(line);
-        }
-        return vbox(menu_elements) | frame | border;
-    });
-
-    // Handle events specific to the menu (including circular navigation)
-    auto custom_menu_with_events = CatchEvent(custom_menu, [&](Event e) -> bool {
-        // Handle 'Up' arrow key for circular navigation
-        if (e == Event::ArrowUp) {
-            if (!options.empty()) {
-                if (selected_index == 0)
-                    selected_index = options.size() - 1;
-                else
-                    selected_index--;
-            }
-            return true; // Event handled
-        }
-
-        // Handle 'Down' arrow key for circular navigation
-        if (e == Event::ArrowDown) {
-            if (!options.empty()) {
-                if (selected_index == options.size() - 1)
-                    selected_index = 0;
-                else
-                    selected_index++;
-            }
-            return true; // Event handled
-        }
-
-        // Handle 'Enter' key to toggle selection
-        if (e == Event::Return) { // Enter key
-            if (selected_index >= 0 && selected_index < options.size()) {
-                fs::path selected_path = current_directory / options[selected_index];
-                if (selected_path.filename() == "..") {
-                    // Navigate to parent directory
-                    current_directory = current_directory.parent_path();
-                    LoadCurrentDirectory();
-                    return true; // Event handled
-                }
-                if (selected_paths.find(selected_path) != selected_paths.end()) {
-                    selected_paths.erase(selected_path);
-                } else {
-                    selected_paths.insert(selected_path);
-                }
-            }
-            return true; // Event handled
-        }
-
-        // Handle 'o' or 'O' key to open directories
-        if (e.is_character()) {
-            std::string characters = e.character();
-            if (!characters.empty()) {
-                char c = characters[0];
-                if (c == 'o' || c == 'O') {
-                    if (selected_index >= 0 && selected_index < options.size()) {
-                        fs::path selected_path = current_directory / options[selected_index];
-                        if (fs::is_directory(selected_path)) {
-                            if (options[selected_index] == "..") {
-                                current_directory = current_directory.parent_path();
-                            } else {
-                                current_directory = selected_path;
-                            }
-                            LoadCurrentDirectory();
-                            return true; // Event handled
-                        }
-                    }
-                }
-            }
-        }
-
-        return false; // Event not handled here
-    });
-
-    // Renderer to display selected items in real-time with '/' appended to directories
+    // Renderer for displaying selected items
     auto display_selected = Renderer([&] {
         std::vector<Element> selected_items;
         for (const auto& path : selected_paths) {
@@ -165,53 +75,93 @@ void UIComponent::Run() {
         }) | border;
     });
 
-    // Create the instructions element
-    auto instructions = Renderer([&] {
-        return vbox({
-            separator(),
-            text("Instructions:") | bold,
-            text("↑/↓ Arrow Keys: Navigate (Circular)"),
-            text("Enter: Select/Deselect"),
-            text("O/o: Enter/Exit Directory"),
-            text("Esc: Jump to 'Done' Button")
-        }) | border;
-    });
+    int left_size = Screen::Create(Dimension::Full()).dimx() / 3;
 
-    // Arrange the components vertically without ESC handling
-    auto container = Container::Vertical({
-        custom_menu_with_events,
-        display_selected,
-        done_button,
-        exit_button,
-        instructions // Add instructions to the container
-    });
+    //Left contains menu list, action buttons, Instructions ______________________________________
+    
+    checkbox_states.reserve(options.size());
+    for (size_t i = 0; i < options.size(); ++i) {
+        checkbox_states.emplace_back(std::make_unique<bool>(false));
+    }
 
-    // Add a CatchEvent around the container to handle ESC key globally
-    auto container_with_escape = CatchEvent(container, [&](Event e) -> bool {
-        if (e == Event::Escape) { // If ESC key is pressed
-            if(menu->Focused()) {
-                done_button->TakeFocus(); // Shift focus to 'Done' button
+    // Create the menu container
+    auto menu_container = Container::Vertical({});
+
+    for (size_t i = 0; i < options.size(); ++i) {
+        fs::path item_path = current_directory / options[i];
+        *checkbox_states[i] = selected_paths.find(item_path) != selected_paths.end();
+
+        // Determine if the current item is a directory and not ".."
+        bool is_directory = fs::is_directory(item_path) && options[i] != "..";
+
+        // Create a CheckboxOption and set the on_change callback
+        auto checkbox_option = CheckboxOption::Simple();
+        checkbox_option.on_change = [this, i, item_path]() {
+            if (*(checkbox_states[i])) {
+                selected_paths.insert(item_path);
             } else {
-                menu->TakeFocus();
+                selected_paths.erase(item_path);
             }
-            return true; // Indicate that the event has been handled
-        }
-        return false; // Let other events be handled normally
+        };
+
+        // Add the Checkbox to the container with the CheckboxOption
+        auto checkbox = Checkbox(
+            options[i] + (is_directory ? "/" : ""),
+            checkbox_states[i].get(),
+            checkbox_option
+        );
+        menu_container->Add(checkbox);
+    }
+
+    auto menu_renderer = Renderer(menu_container, [&] {
+        // No need to clear and repopulate selected_paths here
+        return menu_container->Render() | vscroll_indicator | frame | xflex_grow |
+            size(HEIGHT, EQUAL, Screen::Create(Dimension::Full()).dimy() / 2) | border;
     });
 
-    // Create a renderer to include the current directory path and the container with ESC handling
-    auto layout = Renderer(container_with_escape, [&] {
+    // Left component: Add the menu and the buttons (Done and Exit) in a vertical box layout
+    auto left_component = Renderer(menu_renderer, [&] { 
         return vbox({
-            container_with_escape->Render()
+            menu_renderer->Render(),
+            done_button->Render() | size(HEIGHT, EQUAL, 3) | center ,
+            exit_button->Render() | size(HEIGHT, EQUAL, 3) | center,
         });
     });
 
-    // Start the event loop
-    screen.Loop(layout);
+    // Right Component ___________________________________________________________________
+    auto right_component = Renderer(display_selected, [&] { 
+        return vflow({
+            text("Random number: " + std::to_string(rand() % 100)),
+            display_selected->Render() | center
+        }); 
+    });
 
-    // After exiting the loop, print selected items
-    std::cout << "Selected items:" << std::endl;
+    // Create a container with resizable left and right components.
+    auto main_container = ResizableSplitLeft(left_component, right_component, &left_size);
+
+    auto main_container_renderer = Renderer(main_container, [&] {
+        return main_container->Render() |
+               size(WIDTH, EQUAL, Screen::Create(Dimension::Full()).dimx()) |
+               size(HEIGHT, EQUAL, Screen::Create(Dimension::Full()).dimy());
+    });
+
+    // For all events
+    auto main_container_with_events = CatchEvent(main_container_renderer, [&] (Event e) -> bool {
+        if (e.is_character() && e.character()[0] == 'q') {
+            screen.Exit();
+            return true; 
+        }
+        return false; 
+    });
+
+    // Loop the screen for interaction
+    screen.Loop(main_container_with_events);
+
+    // After exiting the loop, print selected items (if any)
+    std::cout << "Selected items after exit:" << std::endl;
     for (const auto& path : selected_paths) {
         std::cout << path.string() << std::endl;
     }
+    std::cout<<"  "<<selected_index<<"\n";
 }
+

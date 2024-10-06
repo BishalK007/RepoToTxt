@@ -22,6 +22,7 @@ private:
     std::filesystem::path current_directory;               // Current directory path
 
     std::set<std::filesystem::path> selected_paths;        // Set of all selected paths
+    std::vector<std::unique_ptr<bool>> checkbox_states;
 };
 
 #endif // UI_COMPONENT_HPP
