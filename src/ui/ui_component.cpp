@@ -51,9 +51,36 @@ void UIComponent::BuildMenu() {
         // Create a CheckboxOption and set the on_change callback
         auto checkbox_option = CheckboxOption::Simple();
         checkbox_option.on_change = [this, i, item_path]() {
+            if (options[focused_index] == "..") {
+                current_directory = current_directory.parent_path();
+                BuildMenu();
+                return;
+            }
             if (*(checkbox_states[i])) {
+                // Check if any parent of item_path exists, if so remove it
+                auto parent = item_path.parent_path();
+                while (!parent.empty() && parent != parent.root_path()) {
+                    if (selected_paths.find(parent) != selected_paths.end()) {
+                        selected_paths.erase(parent);
+                        break;
+                    }
+                    parent = parent.parent_path();
+                }
+
+                // Check if any children of item_path exist and remove them
+                for (auto it = selected_paths.begin(); it != selected_paths.end();) {
+                    if (it->string().find(item_path.string()) == 0 && it->string() != item_path.string()) {
+                        it = selected_paths.erase(it); // erase child and advance iterator
+                    } else {
+                        ++it; // advance iterator without erasing
+                    }
+                }
+
+                // Insert the item_path after all checks
                 selected_paths.insert(item_path);
+
             } else {
+                // Uncheck case, remove the item_path
                 selected_paths.erase(item_path);
             }
         };
