@@ -130,26 +130,43 @@ void UIComponent::Run() {
         });
     });
 
+    // Create the instructions element
+    auto instructions = Renderer([&] {
+        return vbox({
+            separator(),
+            text("Instructions:") | bold,
+            text("↑/↓ Arrow Keys: Navigate"),
+            text("Enter: Select/Deselect"),
+            text("O/o/Spacebar: Enter/Exit Directory"),
+            text("Esc: Jump to 'Done' Button")
+        }) | border;
+    });
+
     int left_size = Screen::Create(Dimension::Full()).dimx() / 3;
 
     // Left component: Add the menu and the buttons (Done and Exit) in a vertical box layout
-    auto menu_renderer = Renderer(menu_container, [&] {
-        return menu_container->Render() | vscroll_indicator | frame | xflex_grow |
-               size(HEIGHT, EQUAL, Screen::Create(Dimension::Full()).dimy() / 2) | border;
+    auto button_container = Container::Horizontal({
+        done_button,
+        exit_button,
     });
 
-    auto left_component = Renderer(menu_renderer, [&] {
+    auto left_component = Container::Vertical({
+        menu_container,
+        button_container,
+        instructions // Add instructions below the buttons
+    });
+
+    auto left_renderer = Renderer(left_component, [&] {
         return vbox({
             text("Current Directory: " + current_directory.string()) | bold | hcenter,
             separator(),
-            menu_renderer->Render(),
+            menu_container->Render() | vscroll_indicator | frame | flex,
             separator(),
             hbox({
                 done_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
                 exit_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
             }) | hcenter,
-            text("Press 'o' or 'O' to open a directory") | dim | hcenter,
-            text("Press 'q' to quit") | dim | hcenter,
+            instructions->Render(), // Render the instructions below the buttons
         });
     });
 
@@ -163,7 +180,7 @@ void UIComponent::Run() {
     });
 
     // Create a container with resizable left and right components
-    auto main_container = ResizableSplitLeft(left_component, right_component, &left_size);
+    auto main_container = ResizableSplitLeft(left_renderer, right_component, &left_size);
 
     auto main_container_renderer = Renderer(main_container, [&] {
         return main_container->Render() |
@@ -171,14 +188,14 @@ void UIComponent::Run() {
                size(HEIGHT, EQUAL, Screen::Create(Dimension::Full()).dimy());
     });
 
-    // Event handling
-    auto main_container_with_events = CatchEvent(main_container_renderer, [this](Event e) -> bool {
+    // Event handling with circular navigation for the checkboxes
+    auto main_container_with_events = CatchEvent(main_container_renderer, [this, done_button](Event e) -> bool {
         if (e.is_character()) {
             char ch = e.character()[0];
             if (ch == 'q' || ch == 'Q') {
                 screen.ExitLoopClosure()();
                 return true;
-            } else if (ch == 'o' || ch == 'O') {
+            } else if (ch == 'o' || ch == 'O' || ch == ' ') {
                 if (focused_index >= 0 && focused_index < options.size()) {
                     fs::path selected_path = current_directory / options[focused_index];
                     if (options[focused_index] == "..") {
@@ -192,6 +209,25 @@ void UIComponent::Run() {
                     }
                 }
             }
+        }
+
+        // Implement circular navigation
+        if (e == Event::ArrowDown) {
+            focused_index = (focused_index + 1) % options.size();
+            return true;
+        } else if (e == Event::ArrowUp) {
+            focused_index = (focused_index == 0) ? options.size() - 1 : focused_index - 1;
+            return true;
+        }
+
+        if(e == Event::Escape) {
+            // Focus on Done button when Escape is pressed
+            if(menu_container->Focused()) {
+                done_button->TakeFocus();
+            } else {
+                menu_container->TakeFocus();
+            }
+            return true;
         }
         return false;
     });
