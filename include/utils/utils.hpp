@@ -22,6 +22,26 @@ namespace Utils {
      * @param selected_paths Vector of selected file and directory paths.
      */
     void PrintFileContents(const std::vector<std::filesystem::path>& selected_paths);
+
+     /**
+     * @brief Determines if potential_parent is a parent of potential_child.
+     * 
+     * @param potential_parent The potential parent path.
+     * @param potential_child The potential child path.
+     * @return true If potential_parent is a parent of potential_child.
+     * @return false Otherwise.
+     */
+    bool IsParentPath(const std::filesystem::path& potential_parent, const std::filesystem::path& potential_child);
+
+    /**
+     * @brief Determines if potential_child is a child of potential_parent.
+     * 
+     * @param potential_parent The potential parent path.
+     * @param potential_child The potential child path.
+     * @return true If potential_child is a child of potential_parent.
+     * @return false Otherwise.
+     */
+    bool IsChildPath(const std::filesystem::path& potential_parent, const std::filesystem::path& potential_child);
 }
 
 #endif // UTILS_H

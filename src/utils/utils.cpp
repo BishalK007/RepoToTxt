@@ -151,5 +151,20 @@ namespace Utils {
             }
         }
     }
+    bool IsParentPath(const std::filesystem::path& potential_parent, const std::filesystem::path& potential_child) {
+        // Attempt to compute the relative path from potential_parent to potential_child
+        std::error_code ec;
+        std::filesystem::path relative = std::filesystem::relative(potential_child, potential_parent, ec);
+        if (ec) {
+            return false;
+        }
+        // If the relative path starts with "..", then potential_parent is not a parent
+        return !relative.empty() && relative.string().find("..") != 0;
+    }
+
+    bool IsChildPath(const std::filesystem::path& potential_parent, const std::filesystem::path& potential_child) {
+        // A child path is when potential_parent is a parent of potential_child
+        return IsParentPath(potential_parent, potential_child);
+    }
 
 } // namespace Utils

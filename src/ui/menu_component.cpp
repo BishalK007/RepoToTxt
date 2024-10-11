@@ -1,4 +1,6 @@
 #include "ui/menu_component.hpp"
+#include "utils/utils.hpp"
+
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
@@ -65,32 +67,56 @@ void MenuComponent::BuildMenu() {
                 BuildMenu();
                 return;
             }
+
             if (*(checkbox_states[i])) {
-                // Check if any parent of item_path exists, if so remove it
-                auto parent = item_path.parent_path();
-                while (!parent.empty() && parent != parent.root_path()) {
-                    if (selected_paths.find(parent) != selected_paths.end()) {
-                        selected_paths.erase(parent);
+                // **Selection Logic: Adding an Item**
+
+                // **1. Check if any parent of item_path exists in selected_paths**
+                bool has_parent_selected = false;
+                for (const auto& selected_path : selected_paths) {
+                    if (Utils::IsParentPath(selected_path, item_path)) {
+                        has_parent_selected = true;
                         break;
                     }
-                    parent = parent.parent_path();
                 }
 
-                // Check if any children of item_path exist and remove them
-                for (auto it = selected_paths.begin(); it != selected_paths.end();) {
-                    if (it->string().find(item_path.string()) == 0 && it->string() != item_path.string()) {
-                        it = selected_paths.erase(it); // erase child and advance iterator
-                    } else {
-                        ++it; // advance iterator without erasing
+                if (has_parent_selected) {
+                    // A parent is already selected; no need to add this item
+                    // Optionally, you can provide feedback to the user here
+                    return;
+                }
+
+                // **2. Remove any children of item_path from selected_paths**
+                std::vector<fs::path> paths_to_remove;
+                for (const auto& selected_path : selected_paths) {
+                    if (Utils::IsParentPath(item_path, selected_path)) {
+                        paths_to_remove.emplace_back(selected_path);
                     }
                 }
+                for (const auto& path : paths_to_remove) {
+                    selected_paths.erase(path);
+                }
 
-                // Insert the item_path after all checks
+                // **3. Insert the item_path after all checks**
                 selected_paths.insert(item_path);
 
             } else {
-                // Uncheck case, remove the item_path
+                // **Deselection Logic: Removing an Item**
+
+                // Remove the item_path from selected_paths
                 selected_paths.erase(item_path);
+
+                // Optionally, you can also remove any children if needed
+                // For example, if you deselect a directory, you might want to deselect all its children
+                std::vector<fs::path> paths_to_remove;
+                for (const auto& selected_path : selected_paths) {
+                    if (Utils::IsParentPath(item_path, selected_path)) {
+                        paths_to_remove.emplace_back(selected_path);
+                    }
+                }
+                for (const auto& path : paths_to_remove) {
+                    selected_paths.erase(path);
+                }
             }
         };
 
