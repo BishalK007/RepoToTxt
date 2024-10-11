@@ -1,9 +1,70 @@
 #include "ui/ui_component.hpp"
+#include "utils/utils.hpp"
+
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
 #include <iostream>
+#include <filesystem>
+#include <vector>
+#include <algorithm>
+#include <fstream>
+#include <map>
 
 using namespace ftxui;
+
+// Helper function to build a tree structure from selected paths
+void PrintDirectoryTree(const std::vector<std::filesystem::path>& selected_paths, const std::filesystem::path& root) {
+    // Create a map to represent the tree
+    std::map<std::string, std::vector<std::string>> tree;
+
+    // Populate the tree map
+    for (const auto& path : selected_paths) {
+        auto relative_path = std::filesystem::relative(path, root);
+        std::string current = root.filename().string();
+        for (auto it = relative_path.begin(); it != relative_path.end(); ++it) {
+            std::string part = it->string();
+            tree[current].push_back(part);
+            current += "/" + part;
+        }
+    }
+
+    // Recursive function to print the tree
+    std::function<void(const std::string&, const std::string&)> print_tree;
+    print_tree = [&](const std::string& node, const std::string& prefix) {
+        const auto& children = tree[node];
+        for (size_t i = 0; i < children.size(); ++i) {
+            bool is_last = (i == children.size() - 1);
+            std::cout << prefix;
+            if (is_last) {
+                std::cout << "└── ";
+            } else {
+                std::cout << "├── ";
+            }
+            std::cout << children[i] << "\n";
+            std::string new_prefix = prefix + (is_last ? "    " : "│   ");
+            print_tree(node + "/" + children[i], new_prefix);
+        }
+    };
+
+    // Print the root
+    std::cout << root.string() << " (root)\n";
+    print_tree(root.filename().string(), "");
+}
+
+// Helper function to print file contents
+void PrintFileContents(const std::vector<std::filesystem::path>& selected_paths) {
+    for (const auto& path : selected_paths) {
+        if (std::filesystem::is_regular_file(path)) {
+            std::cout << "\nContents of " << path.string() << ":\n";
+            std::ifstream file(path);
+            if (file) {
+                std::cout << file.rdbuf() << "\n";
+            } else {
+                std::cout << "Failed to open " << path.string() << "\n";
+            }
+        }
+    }
+}
 
 UIComponent::UIComponent()
     : screen(ScreenInteractive::Fullscreen()),
@@ -120,9 +181,42 @@ void UIComponent::Run() {
     // Loop the screen for interaction
     screen.Loop(main_container_with_events);
 
-    // After exiting the loop, print selected items (if any)
-    std::cout << "Selected items after exit:" << std::endl;
-    for (const auto& path : selected_paths) {
-        std::cout << path.string() << std::endl;
+    // After exiting the loop, display the directory tree and file contents
+    if (!selected_paths.empty()) {
+        // Ensure all selected paths are absolute
+        std::vector<std::filesystem::path> absolute_paths;
+        for (const auto& path : selected_paths) {
+            absolute_paths.push_back(std::filesystem::absolute(path));
+        }
+
+        // Determine the common root path
+        std::filesystem::path common_root = absolute_paths[0];
+        for (const auto& path : absolute_paths) {
+            auto it1 = common_root.begin();
+            auto it2 = path.begin();
+            std::filesystem::path temp_root;
+            while (it1 != common_root.end() && it2 != path.end() && *it1 == *it2) {
+                temp_root /= *it1;
+                ++it1;
+                ++it2;
+            }
+            common_root = temp_root;
+            if (common_root.empty()) {
+                break; // No common root
+            }
+        }
+
+        if (common_root.empty()) {
+            // If there's no common root, use the current directory as the base
+            common_root = std::filesystem::current_path();
+        }
+
+        // Print the directory tree
+        Utils::PrintDirectoryTree(absolute_paths, common_root);
+
+        // Print the contents of each selected file
+        Utils::PrintFileContents(absolute_paths);
+    } else {
+        std::cout << "No items were selected.\n";
     }
 }
