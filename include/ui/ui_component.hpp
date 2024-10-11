@@ -5,8 +5,16 @@
 #include <string>
 #include <iostream>
 #include <set>
-#include <ftxui/component/screen_interactive.hpp>
 #include <filesystem>
+#include <memory>
+
+#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/component/component.hpp>
+
+#include "ui/menu_component.hpp"
+#include "ui/instructions_component.hpp"
+#include "ui/display_selected_component.hpp"
+#include "ui/button_component.hpp"
 
 class UIComponent {
 public:
@@ -14,18 +22,19 @@ public:
     void Run();
 
 private:
-    void LoadCurrentDirectory();
-    void BuildMenu();  // Function to rebuild the menu when changing directories
-
-    std::vector<std::string> options;              // Holds the names of files and folders
     int selected_index = 0;                        // Currently selected index
-    int focused_index = 0;                         // **Selector variable for focused item**
+    int focused_index = 0;                         // Selector variable for focused item
     ftxui::ScreenInteractive screen;               // FTXUI screen for displaying the UI
     std::filesystem::path current_directory;       // Current directory path
 
-    std::set<std::filesystem::path> selected_paths;        // Set of all selected paths
+    std::vector<std::string> options;              // Holds the names of files and folders
     std::vector<std::unique_ptr<bool>> checkbox_states;    // Checkbox states
-    ftxui::Component menu_container;                       // Menu container component
+    std::set<std::filesystem::path> selected_paths;        // Set of all selected paths
+
+    MenuComponent menu_component;
+    InstructionsComponent instructions_component;
+    DisplaySelectedComponent display_selected_component;
+    ButtonComponent button_component;
 };
 
 #endif // UI_COMPONENT_HPP
