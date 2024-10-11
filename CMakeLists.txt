@@ -52,7 +52,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # ----------------------------
 
 # Find Packages and Components
-find_package(fmt REQUIRED)
 find_package(ftxui REQUIRED)
 
 # ----------------------------
@@ -74,7 +73,7 @@ add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
 # ----------------------------
 
 # Link Boost::math and fmt::fmt to the executable
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE fmt::fmt ftxui::screen ftxui::dom ftxui::component)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE  ftxui::screen ftxui::dom ftxui::component)
 
 # ----------------------------
 # Optional: Print Configuration (Useful for Debugging)
