@@ -8,9 +8,10 @@ using namespace ftxui;
 UIComponent::UIComponent()
     : screen(ScreenInteractive::Fullscreen()),
       current_directory(std::filesystem::current_path()),
+      root_path(current_directory), // Initialize root_path to initial current_directory
       menu_component(focused_index, current_directory, options, checkbox_states, selected_paths),
       instructions_component(),
-      display_selected_component(selected_paths),
+      display_selected_component(selected_paths, root_path), // Pass root_path
       button_component(screen, selected_paths)
 {
 }

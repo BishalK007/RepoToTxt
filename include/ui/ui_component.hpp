@@ -26,6 +26,7 @@ private:
     int focused_index = 0;                         // Selector variable for focused item
     ftxui::ScreenInteractive screen;               // FTXUI screen for displaying the UI
     std::filesystem::path current_directory;       // Current directory path
+    const std::filesystem::path root_path;         // Fixed root path for relative calculations
 
     std::vector<std::string> options;              // Holds the names of files and folders
     std::vector<std::unique_ptr<bool>> checkbox_states;    // Checkbox states
