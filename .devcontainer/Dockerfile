@@ -7,13 +7,23 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Update the package list
 RUN apt-get update
 
-# Install essential build tools and dependencies
-RUN apt-get install -y build-essential curl tar unzip zip wget ninja-build pkg-config libssl-dev sudo
-RUN apt-get install -y git
-RUN apt-get install -y jq
+# Install essential build tools and dependencies, including locales
+RUN apt-get install -y build-essential curl tar unzip zip wget ninja-build pkg-config libssl-dev sudo locales
+
+# Install additional tools
+RUN apt-get install -y git jq wl-clipboard
 
 # Clean up the apt cache to reduce image size
 RUN rm -rf /var/lib/apt/lists/*
+
+# Generate and set the locale
+RUN locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8
+
+# Set environment variables for locale
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 # Download and install CMake 3.30.0 manually
 RUN CMAKE_VERSION=3.30.0 && \
@@ -23,11 +33,14 @@ RUN CMAKE_VERSION=3.30.0 && \
     ln -s /opt/${CMAKE_DIR}/bin/cmake /usr/local/bin/cmake && \
     rm /tmp/cmake.tar.gz
 
-# Create a non-root user to run the container
-RUN useradd -m -s /bin/bash vscode
+# Set build arguments for UID and GID
+ARG USER_ID=1000
+ARG GROUP_ID=1000
 
-# Add 'vscode' to the 'sudo' group
-RUN usermod -aG sudo vscode
+# Create a non-root user with specified UID and GID
+RUN groupadd -g ${GROUP_ID} vscode && \
+    useradd -m -u ${USER_ID} -g vscode -s /bin/bash vscode && \
+    usermod -aG sudo,users vscode
 
 # Ensure that /etc/sudoers.d exists
 RUN mkdir -p /etc/sudoers.d
@@ -43,7 +56,8 @@ WORKDIR /home/vscode
 # Add vcpkg to PATH for convenience
 ENV PATH="/vcpkg:${PATH}"
 
-# (Optional) Remove the SHELL directive to avoid overriding default shell settings
-# SHELL ["/bin/bash", "-c"]
+# Set environment variables for Wayland
+ENV WAYLAND_DISPLAY=wayland-0
+ENV XDG_RUNTIME_DIR=/run/user/1000
 
 # This Dockerfile sets up a development environment with CMake 3.30.0 installed from source.
