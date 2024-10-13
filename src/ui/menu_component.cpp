@@ -71,33 +71,31 @@ void MenuComponent::BuildMenu() {
             if (*(checkbox_states[i])) {
                 // **Selection Logic: Adding an Item**
 
-                // **1. Check if any parent of item_path exists in selected_paths**
-                bool has_parent_selected = false;
+                // **1. Identify and Remove Any Parent Directories from selected_paths**
+                std::vector<fs::path> parents_to_remove;
                 for (const auto& selected_path : selected_paths) {
                     if (Utils::IsParentPath(selected_path, item_path)) {
-                        has_parent_selected = true;
-                        break;
+                        parents_to_remove.emplace_back(selected_path);
+                    }
+                }
+                for (const auto& parent_path : parents_to_remove) {
+                    selected_paths.erase(parent_path);
+
+                    // Find the index of the parent in options
+                    auto it = std::find_if(options.begin(), options.end(),
+                                           [&](const std::string& option) {
+                                               return (current_directory / option) == parent_path;
+                                           });
+                    if (it != options.end()) {
+                        size_t parent_index = std::distance(options.begin(), it);
+                        if (parent_index < checkbox_states.size()) {
+                            // Uncheck the parent checkbox
+                            *checkbox_states[parent_index] = false;
+                        }
                     }
                 }
 
-                if (has_parent_selected) {
-                    // A parent is already selected; no need to add this item
-                    // Optionally, you can provide feedback to the user here
-                    return;
-                }
-
-                // **2. Remove any children of item_path from selected_paths**
-                std::vector<fs::path> paths_to_remove;
-                for (const auto& selected_path : selected_paths) {
-                    if (Utils::IsParentPath(item_path, selected_path)) {
-                        paths_to_remove.emplace_back(selected_path);
-                    }
-                }
-                for (const auto& path : paths_to_remove) {
-                    selected_paths.erase(path);
-                }
-
-                // **3. Insert the item_path after all checks**
+                // **2. Add the Child Directory to selected_paths**
                 selected_paths.insert(item_path);
 
             } else {
@@ -106,8 +104,7 @@ void MenuComponent::BuildMenu() {
                 // Remove the item_path from selected_paths
                 selected_paths.erase(item_path);
 
-                // Optionally, you can also remove any children if needed
-                // For example, if you deselect a directory, you might want to deselect all its children
+                // Optionally, remove any children of the deselected directory
                 std::vector<fs::path> paths_to_remove;
                 for (const auto& selected_path : selected_paths) {
                     if (Utils::IsParentPath(item_path, selected_path)) {
@@ -116,6 +113,19 @@ void MenuComponent::BuildMenu() {
                 }
                 for (const auto& path : paths_to_remove) {
                     selected_paths.erase(path);
+
+                    // Find the index of the child in options
+                    auto it = std::find_if(options.begin(), options.end(),
+                                           [&](const std::string& option) {
+                                               return (current_directory / option) == path;
+                                           });
+                    if (it != options.end()) {
+                        size_t child_index = std::distance(options.begin(), it);
+                        if (child_index < checkbox_states.size()) {
+                            // Uncheck the child checkbox
+                            *checkbox_states[child_index] = false;
+                        }
+                    }
                 }
             }
         };
