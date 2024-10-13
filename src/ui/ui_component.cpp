@@ -91,19 +91,41 @@ void UIComponent::Run() {
     auto cat_tree_button = button_component.GetCatTreeButton();
     auto exit_button = button_component.GetExitButton();
 
-    // Left component: Add the menu and the buttons (Done and Exit) in a vertical box layout
-    auto button_container = Container::Horizontal({
-        copy_all_button,
-        cat_all_button,
-        copy_tree_button,
-        cat_tree_button,
-        exit_button,
+
+
+    // Renderer for the flexbox layout of buttons
+    auto button_flexbox_renderer = Renderer([&] {
+        // Function to style a button based on focus
+        auto style_button = [&](Component button, int index) -> Element {
+            return button->Render();
+        };
+
+        return flexbox({
+            // First Row: copy_all_button and cat_all_button
+            flexbox({
+                style_button(copy_all_button, 0) | size(HEIGHT, EQUAL, 3) | flex,
+                style_button(cat_all_button, 1) | size(HEIGHT, EQUAL, 3) | flex,
+            }, FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
+
+            // Second Row: copy_tree_button and cat_tree_button
+            flexbox({
+                style_button(copy_tree_button, 2) | size(HEIGHT, EQUAL, 3) | flex,
+                style_button(cat_tree_button, 3) | size(HEIGHT, EQUAL, 3) | flex,
+            }, FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
+
+            // Third Row: exit_button spanning both columns
+            style_button(exit_button, 4) | size(HEIGHT, EQUAL, 3) | flex | flex_grow,
+        }, FlexboxConfig()
+            .Set(FlexboxConfig::Direction::Column)       // Stack rows vertically
+            .Set(FlexboxConfig::JustifyContent::Center)  // Center vertically
+            .Set(FlexboxConfig::AlignItems::Center))     // Center horizontally
+            | hcenter; // Center the entire flexbox horizontally
     });
 
     auto left_component = Container::Vertical({
         menu_container,
-        button_container,
-        instructions // Add instructions below the buttons
+        button_flexbox_renderer,
+        instructions
     });
 
     auto left_renderer = Renderer(left_component, [&] {
@@ -112,14 +134,8 @@ void UIComponent::Run() {
             separator(),
             menu_container->Render() | vscroll_indicator | frame | flex,
             separator(),
-            hbox({
-                copy_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-                cat_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-                copy_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-                cat_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-                exit_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-            }) | hcenter,
-            instructions->Render(), // Render the instructions below the buttons
+            button_flexbox_renderer->Render(),
+            instructions->Render(),
         });
     });
 
