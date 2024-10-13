@@ -85,12 +85,18 @@ void UIComponent::Run() {
     auto menu_container = menu_component.GetMenuContainer();
     auto instructions = instructions_component.Render();
     auto display_selected = display_selected_component.Render();
-    auto done_button = button_component.GetDoneButton();
+    auto copy_all_button = button_component.GetCopyAllButton();
+    auto cat_all_button = button_component.GetCatAllButton();
+    auto copy_tree_button = button_component.GetCopyTreeButton();
+    auto cat_tree_button = button_component.GetCatTreeButton();
     auto exit_button = button_component.GetExitButton();
 
     // Left component: Add the menu and the buttons (Done and Exit) in a vertical box layout
     auto button_container = Container::Horizontal({
-        done_button,
+        copy_all_button,
+        cat_all_button,
+        copy_tree_button,
+        cat_tree_button,
         exit_button,
     });
 
@@ -107,7 +113,10 @@ void UIComponent::Run() {
             menu_container->Render() | vscroll_indicator | frame | flex,
             separator(),
             hbox({
-                done_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                copy_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                cat_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                copy_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                cat_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
                 exit_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
             }) | hcenter,
             instructions->Render(), // Render the instructions below the buttons
@@ -135,7 +144,7 @@ void UIComponent::Run() {
     });
 
     // Event handling with circular navigation for the checkboxes
-    auto main_container_with_events = CatchEvent(main_container_renderer, [this, menu_container, done_button](Event e) -> bool {
+    auto main_container_with_events = CatchEvent(main_container_renderer, [this, menu_container, copy_all_button](Event e) -> bool {
         if (e.is_character()) {
             char ch = e.character()[0];
             if (ch == 'q' || ch == 'Q') {
@@ -167,9 +176,9 @@ void UIComponent::Run() {
         }
 
         if(e == Event::Escape) {
-            // Focus on Done button when Escape is pressed
+            // Focus on Copy All button when Escape is pressed
             if(menu_container->Focused()) {
-                done_button->TakeFocus();
+                copy_all_button->TakeFocus();
             } else {
                 menu_container->TakeFocus();
             }

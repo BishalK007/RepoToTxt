@@ -11,11 +11,17 @@ namespace fs = std::filesystem;
 class ButtonComponent {
 public:
     ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths);
-    ftxui::Component GetDoneButton();
+    ftxui::Component GetCopyAllButton();
+    ftxui::Component GetCatAllButton();
+    ftxui::Component GetCopyTreeButton();
+    ftxui::Component GetCatTreeButton();
     ftxui::Component GetExitButton();
 
 private:
-    ftxui::Component done_button;
+    ftxui::Component copy_all_button;
+    ftxui::Component cat_all_button;
+    ftxui::Component copy_tree_button;
+    ftxui::Component cat_tree_button;
     ftxui::Component exit_button;
     ftxui::ScreenInteractive& screen;
     std::set<fs::path>& selected_paths;
