@@ -3,8 +3,9 @@
 
 using namespace ftxui;
 
-ButtonComponent::ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths, std::string& pressed_button)
-    : screen(screen), selected_paths(selected_paths)
+ButtonComponent::ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths, std::string& pressed_button, int& button_focused_index)
+    : screen(screen), selected_paths(selected_paths),
+    button_focused_index(button_focused_index)
 {
     copy_all_button = Button("Copy All", [&] {
         pressed_button = "CoA";

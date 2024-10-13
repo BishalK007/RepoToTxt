@@ -73,7 +73,7 @@ UIComponent::UIComponent()
       menu_component(focused_index, current_directory, options, checkbox_states, selected_paths),
       instructions_component(),
       display_selected_component(selected_paths, root_path), // Pass root_path
-      button_component(screen, selected_paths, pressed_button)
+      button_component(screen, selected_paths, pressed_button, button_focused_index)
 {
 }
 
@@ -91,40 +91,35 @@ void UIComponent::Run() {
     auto cat_tree_button = button_component.GetCatTreeButton();
     auto exit_button = button_component.GetExitButton();
 
-
+    // Create a vertical container for the main button rows
+    auto main_buttons_container = Container::Vertical({
+        // First Row: Copy All and Cat All
+        Container::Horizontal({
+            button_component.GetCopyAllButton(),
+            button_component.GetCatAllButton(),
+        }),
+        // Second Row: Copy Tree and Cat Tree
+        Container::Horizontal({
+            button_component.GetCopyTreeButton(),
+            button_component.GetCatTreeButton(),
+        }),
+        // Third Row: Exit Button spanning both columns
+        button_component.GetExitButton(),
+    });    
 
     // Renderer for the flexbox layout of buttons
-    auto button_flexbox_renderer = Renderer([&] {
-        // Function to style a button based on focus
-        auto style_button = [&](Component button, int index) -> Element {
-            return button->Render();
-        };
+    auto button_container = Container::Horizontal({
+        copy_all_button,
+        cat_all_button,
+        copy_tree_button,
+        cat_tree_button,
+        exit_button
+    }, &button_focused_index);
 
-        return flexbox({
-            // First Row: copy_all_button and cat_all_button
-            flexbox({
-                style_button(copy_all_button, 0) | size(HEIGHT, EQUAL, 3) | flex,
-                style_button(cat_all_button, 1) | size(HEIGHT, EQUAL, 3) | flex,
-            }, FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
-
-            // Second Row: copy_tree_button and cat_tree_button
-            flexbox({
-                style_button(copy_tree_button, 2) | size(HEIGHT, EQUAL, 3) | flex,
-                style_button(cat_tree_button, 3) | size(HEIGHT, EQUAL, 3) | flex,
-            }, FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
-
-            // Third Row: exit_button spanning both columns
-            style_button(exit_button, 4) | size(HEIGHT, EQUAL, 3) | flex | flex_grow,
-        }, FlexboxConfig()
-            .Set(FlexboxConfig::Direction::Column)       // Stack rows vertically
-            .Set(FlexboxConfig::JustifyContent::Center)  // Center vertically
-            .Set(FlexboxConfig::AlignItems::Center))     // Center horizontally
-            | hcenter; // Center the entire flexbox horizontally
-    });
 
     auto left_component = Container::Vertical({
         menu_container,
-        button_flexbox_renderer,
+        button_container,
         instructions
     });
 
@@ -134,7 +129,26 @@ void UIComponent::Run() {
             separator(),
             menu_container->Render() | vscroll_indicator | frame | flex,
             separator(),
-            button_flexbox_renderer->Render(),
+            flexbox({
+                // First Row: copy_all_button and cat_all_button
+                flexbox({
+                    copy_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                    cat_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                }, FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
+
+                // Second Row: copy_tree_button and cat_tree_button
+                flexbox({
+                    copy_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                    cat_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                }, FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
+
+                // Third Row: exit_button spanning both columns
+                exit_button->Render() | size(HEIGHT, EQUAL, 3) | flex | flex_grow,
+            }, FlexboxConfig()
+                .Set(FlexboxConfig::Direction::Column)       // Stack rows vertically
+                .Set(FlexboxConfig::JustifyContent::Center)  // Center vertically
+                .Set(FlexboxConfig::AlignItems::Center))     // Center horizontally
+                | hcenter,
             instructions->Render(),
         });
     });
@@ -160,7 +174,15 @@ void UIComponent::Run() {
     });
 
     // Event handling with circular navigation for the checkboxes
-    auto main_container_with_events = CatchEvent(main_container_renderer, [this, menu_container, copy_all_button](Event e) -> bool {
+    auto main_container_with_events = CatchEvent(main_container_renderer, [this, 
+                                menu_container, 
+                                copy_all_button,
+                                cat_all_button,
+                                copy_tree_button,
+                                cat_tree_button,
+                                exit_button, 
+                                button_container
+                            ](Event e) -> bool {
         if (e.is_character()) {
             char ch = e.character()[0];
             if (ch == 'q' || ch == 'Q') {
@@ -184,9 +206,25 @@ void UIComponent::Run() {
 
         // Implement circular navigation
         if (e == Event::ArrowDown) {
+            if(!menu_container->Focused()) {
+                if(copy_all_button->Focused()) button_focused_index = 4;
+                else if(cat_all_button->Focused()) button_focused_index = 3;
+                else if(copy_tree_button->Focused()) button_focused_index = 4;
+                else if(cat_tree_button->Focused()) button_focused_index = 4;
+                else if(exit_button->Focused()) button_focused_index = 0;
+                return true;
+            } 
             focused_index = (focused_index + 1) % options.size();
             return true;
         } else if (e == Event::ArrowUp) {
+            if(!menu_container->Focused()) {
+                if(copy_all_button->Focused()) button_focused_index = 4;
+                else if(cat_all_button->Focused()) button_focused_index = 4;
+                else if(copy_tree_button->Focused()) button_focused_index = 0;
+                else if(cat_tree_button->Focused()) button_focused_index = 1;
+                else if(exit_button->Focused()) button_focused_index = 3;
+                return true;
+            } 
             focused_index = (focused_index == 0) ? options.size() - 1 : focused_index - 1;
             return true;
         }
@@ -194,7 +232,7 @@ void UIComponent::Run() {
         if(e == Event::Escape) {
             // Focus on Copy All button when Escape is pressed
             if(menu_container->Focused()) {
-                copy_all_button->TakeFocus();
+                button_container->TakeFocus();
             } else {
                 menu_container->TakeFocus();
             }

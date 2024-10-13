@@ -24,6 +24,8 @@ public:
 private:
     int selected_index = 0;                        // Currently selected index
     int focused_index = 0;                         // Selector variable for focused item
+    int button_focused_index = 0;                  // Focused index for buttons
+    
     ftxui::ScreenInteractive screen;               // FTXUI screen for displaying the UI
     std::filesystem::path current_directory;       // Current directory path
     const std::filesystem::path root_path;         // Fixed root path for relative calculations
