@@ -8,10 +8,10 @@ InstructionsComponent::InstructionsComponent() {
         return vbox({
             separator(),
             text("Instructions:") | bold,
-            text("↑/↓ Arrow Keys: Navigate"),
+            text("↑/↓/→/← Arrow Keys: Navigate"),
             text("Enter: Select/Deselect"),
             text("O/o/Spacebar: Enter/Exit Directory"),
-            text("Esc: Jump to 'Done' Button")
+            text("Esc: Jump to 'Copy All' Button")
         }) | border;
     });
 }
