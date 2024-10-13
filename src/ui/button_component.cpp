@@ -3,39 +3,28 @@
 
 using namespace ftxui;
 
-ButtonComponent::ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths)
+ButtonComponent::ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths, std::string& pressed_button)
     : screen(screen), selected_paths(selected_paths)
 {
     copy_all_button = Button("Copy All", [&] {
-        std::cout << "Selected items:" << std::endl;
-        for (const auto& path : selected_paths) {
-            std::cout << path.string() << std::endl;
-        }
+        pressed_button = "CoA";
         screen.ExitLoopClosure()();
     });
     cat_all_button = Button("Cat All", [&] {
-        std::cout << "Selected items:" << std::endl;
-        for (const auto& path : selected_paths) {
-            std::cout << path.string() << std::endl;
-        }
+        pressed_button = "CaA";
         screen.ExitLoopClosure()();
     });
     copy_tree_button = Button("Copy (Tree)", [&] {
-        std::cout << "Selected items:" << std::endl;
-        for (const auto& path : selected_paths) {
-            std::cout << path.string() << std::endl;
-        }
+        pressed_button = "CoT";
         screen.ExitLoopClosure()();
     });
     cat_tree_button = Button("Cat (Tree)", [&] {
-        std::cout << "Selected items:" << std::endl;
-        for (const auto& path : selected_paths) {
-            std::cout << path.string() << std::endl;
-        }
+        pressed_button = "CaT";
         screen.ExitLoopClosure()();
     });
 
     exit_button = Button("Exit", [&] {
+        pressed_button = "Ex";
         selected_paths.clear(); // Clear selections
         screen.ExitLoopClosure()();
     });

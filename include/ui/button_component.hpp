@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 
 class ButtonComponent {
 public:
-    ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths);
+    ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths, std::string& pressedButton);
     ftxui::Component GetCopyAllButton();
     ftxui::Component GetCatAllButton();
     ftxui::Component GetCopyTreeButton();

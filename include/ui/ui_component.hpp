@@ -36,6 +36,8 @@ private:
     InstructionsComponent instructions_component;
     DisplaySelectedComponent display_selected_component;
     ButtonComponent button_component;
+
+    std::string pressed_button = "Ex";               // This button tracks the last pressed button. Valid values - CoA, CoT, CaA, CaT, Ex(default)
 };
 
 #endif // UI_COMPONENT_HPP

@@ -73,7 +73,7 @@ UIComponent::UIComponent()
       menu_component(focused_index, current_directory, options, checkbox_states, selected_paths),
       instructions_component(),
       display_selected_component(selected_paths, root_path), // Pass root_path
-      button_component(screen, selected_paths)
+      button_component(screen, selected_paths, pressed_button)
 {
 }
 
@@ -219,12 +219,25 @@ void UIComponent::Run() {
             // If there's no common root, use the current directory as the base
             common_root = std::filesystem::current_path();
         }
+        
+        //When Copy all is pressed
+        if(pressed_button == "CaA") {
+            // Print the directory tree
+            Utils::PrintDirectoryTree(absolute_paths, common_root, std::cout);
 
-        // Print the directory tree
-        Utils::PrintDirectoryTree(absolute_paths, common_root);
-
-        // Print the contents of each selected file
-        Utils::PrintFileContents(absolute_paths);
+            // Print the contents of each selected file
+            Utils::PrintFileContents(absolute_paths, std::cout);
+        } else if (pressed_button == "CaT") {
+            // Print the directory tree
+            Utils::PrintDirectoryTree(absolute_paths, common_root, std::cout);
+        } else if (pressed_button == "CoA") {
+            // Print the directory tree
+            Utils::PrintDirectoryTree(absolute_paths, common_root, std::cout);
+        } else if (pressed_button == "CoT") {
+            // Print the directory tree
+            Utils::PrintDirectoryTree(absolute_paths, common_root, std::cout);
+        }
+        
     } else {
         std::cout << "No items were selected.\n";
     }
