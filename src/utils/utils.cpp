@@ -250,17 +250,50 @@ namespace Utils {
         return true;
 
     #elif __linux__
-        // Linux implementation using xclip
-        FILE* pipe = popen("xclip -selection clipboard", "w");
-        if (pipe == nullptr) {
+        // Determine the display server
+        const char* wayland_display = getenv("WAYLAND_DISPLAY");
+        const char* x11_display = getenv("DISPLAY");
+
+        std::string command;
+
+        if (wayland_display != nullptr) {
+            // Wayland detected, use wl-copy
+            command = "wl-copy";
+        } else if (x11_display != nullptr) {
+            // X11 detected, use xclip
+            command = "xclip -selection clipboard";
+        } else {
+            // Neither Wayland nor X11 detected
+            fprintf(stderr, "Unsupported display server.\n");
             return false;
         }
-        fwrite(text.c_str(), sizeof(char), text.size(), pipe);
-        pclose(pipe);
-        return true;
 
+        // Open a pipe to the selected clipboard utility
+        FILE* pipe = popen(command.c_str(), "w");
+        if (pipe == nullptr) {
+            perror("popen");
+            return false;
+        }
+
+        // Write the text to the clipboard
+        size_t bytes_written = fwrite(text.c_str(), sizeof(char), text.size(), pipe);
+        if (bytes_written != text.size()) {
+            perror("fwrite");
+            pclose(pipe);
+            return false;
+        }
+
+        // Close the pipe and check for errors
+        int return_code = pclose(pipe);
+        if (return_code != 0) {
+            fprintf(stderr, "Clipboard command failed with exit code %d.\n", return_code);
+            return false;
+        }
+
+        return true;
     #else
         // Other platforms
+        fprintf(stderr, "Clipboard copy not implemented for this platform.\n");
         return false;
     #endif
     }

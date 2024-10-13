@@ -220,7 +220,7 @@ void UIComponent::Run() {
             common_root = std::filesystem::current_path();
         }
         
-        //When Copy all is pressed
+        //When particular button is pressed
         if(pressed_button == "CaA") {
             // Print the directory tree
             Utils::PrintDirectoryTree(absolute_paths, common_root, std::cout);
@@ -231,11 +231,26 @@ void UIComponent::Run() {
             // Print the directory tree
             Utils::PrintDirectoryTree(absolute_paths, common_root, std::cout);
         } else if (pressed_button == "CoA") {
-            // Print the directory tree
-            Utils::PrintDirectoryTree(absolute_paths, common_root, std::cout);
+            // create a local string_stream
+            std::ostringstream string_stream;
+
+            // Print the directory tree to string_stream
+            Utils::PrintDirectoryTree(absolute_paths, common_root, string_stream);
+
+            // Print the contents of each selected file to string_stream
+            Utils::PrintFileContents(absolute_paths, string_stream);
+
+            // copy string_stream to clipboard
+            Utils::CopyToClipboard(string_stream.str());
         } else if (pressed_button == "CoT") {
-            // Print the directory tree
-            Utils::PrintDirectoryTree(absolute_paths, common_root, std::cout);
+            // create a local string_stream
+            std::ostringstream string_stream;
+
+            // Print the directory tree to string_stream
+            Utils::PrintDirectoryTree(absolute_paths, common_root, string_stream);
+
+            // copy string_stream to clipboard
+            Utils::CopyToClipboard(string_stream.str());
         }
         
     } else {
