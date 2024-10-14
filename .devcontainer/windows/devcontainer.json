@@ -1,0 +1,36 @@
+{
+    "name": "C++ Development with vcpkg on Windows",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".",
+        "args": {
+            "USERNAME": "vscode",
+            "USER_PASSWORD": "Password123!"
+        }
+    },
+    "settings": {
+        "terminal.integrated.shell.windows": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "C_Cpp.intelliSenseEngine": "Default",
+        "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+    },
+    "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "ms-vscode.makefile-tools"
+    ],
+    "forwardPorts": [],
+    "postCreateCommand": "powershell -ExecutionPolicy ByPass -File .devcontainer/post-create.ps1",
+    "mounts": [
+        "source=${localWorkspaceFolder}/vcpkg,target=C:/vcpkg,type=bind,consistency=cached",
+        "source=${env:USERPROFILE}/.config/environment.d,target=C:/Users/vscode/.config/environment.d,type=bind,consistency=cached"
+    ],
+    "remoteUser": "vscode",
+    "containerEnv": {
+        "WAYLAND_DISPLAY": "wayland-0",
+        "XDG_RUNTIME_DIR": "C:/Users/vscode/AppData/Local/Temp"
+    },
+    "runArgs": [
+        "--security-opt", "label=type:unconfined"
+    ]
+}
