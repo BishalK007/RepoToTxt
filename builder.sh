@@ -13,7 +13,7 @@ USE_VCPKG=OFF
 # ----------- GLOBAL CONFIGURATION ------------- #
 # Set these values as desired for your global configuration
 GLOBAL_PROJECT_NAME="RepoToTxt"
-GLOBAL_EXECUTABLE_NAME="RepoToTxt"
+GLOBAL_EXECUTABLE_NAME="repototxt"
 GLOBAL_PROJECT_VERSION="1.0"
 IS_SET_CONFIG_GLOBAL=false  # Default to false; can be set via --conf-glob
 
