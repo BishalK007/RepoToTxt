@@ -3,19 +3,35 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Default configuration
 BUILD_DIR="build"
-EXECUTABLE_NAME="MyExecutable" # Default executable name
+PROJECT_NAME="MyProject"
+EXECUTABLE_NAME="MyExecutable"
+PROJECT_VERSION="1.0"
+USE_VCPKG=OFF
+
+# ----------- GLOBAL CONFIGURATION ------------- #
+# Set these values as desired for your global configuration
+GLOBAL_PROJECT_NAME="RepoToTxt"
+GLOBAL_EXECUTABLE_NAME="RepoToTxt"
+GLOBAL_PROJECT_VERSION="1.0"
+IS_SET_CONFIG_GLOBAL=false  # Default to false; can be set via --conf-glob
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [--conf|-c] [--build|-b] [--run|-r] [--zip|-z] [--exe|-e EXECUTABLE_NAME]"
+    echo "Usage: $0 [options]"
     echo
     echo "Options:"
-    echo "  --conf, -c   Configure the CMake project"
-    echo "  --build, -b  Build the project"
-    echo "  --run, -r    Run the executable after building"
-    echo "  --zip, -z    Zip all files in the current directory, excluding certain files"
-    echo "  --exe, -e    Specify the name of the executable to run"
+    echo "  --conf, -c         Configure the CMake project"
+    echo "  --build, -b        Build the project"
+    echo "  --run, -r          Run the executable after building"
+    echo "  --zip, -z          Zip project files, excluding certain directories"
+    echo "  --exe, -e NAME     Specify the name of the executable"
+    echo "  --proj, -p NAME    Specify the project name"
+    echo "  --ver, -v VER      Specify the project version"
+    echo "  --use-nix          Build without using Vcpkg (for Nix environment)"
+    echo "  --conf-glob        Use global configuration settings"
+    echo "  --help, -h         Display this help message"
     exit 1
 }
 
@@ -29,7 +45,11 @@ configure_project() {
     mkdir -p "$BUILD_DIR"
 
     # Run CMake configuration
-    cmake -B "$BUILD_DIR" -S .
+    cmake -B "$BUILD_DIR" -S . \
+        -DUSE_VCPKG="$USE_VCPKG" \
+        -DEXECUTABLE_NAME="$EXECUTABLE_NAME" \
+        -DPROJECT_NAME="$PROJECT_NAME" \
+        -DPROJECT_VERSION="$PROJECT_VERSION"
 
     echo "Configuration complete."
 }
@@ -56,7 +76,7 @@ run_executable() {
     if [ -f "$EXECUTABLE_PATH" ]; then
         ./"$EXECUTABLE_PATH"
     else
-        echo "Executable $EXECUTABLE_NAME not found. Please build the project first."
+        echo "Executable $EXECUTABLE_NAME not found in $BUILD_DIR. Please build the project first."
         exit 1
     fi
 }
@@ -68,7 +88,7 @@ zip_files() {
     echo "----------------------------------------"
 
     # Create the zip file excluding the specified directories and files
-    zip -r files.zip . -x "files.zip" ".*" "build/*" "vcpkg/*"
+    zip -r files.zip . -x "files.zip" ".*" "$BUILD_DIR/*" "build-nix/*" "vcpkg/*"
 
     echo "Zipping complete. Created files.zip."
 }
@@ -82,29 +102,65 @@ fi
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --conf|-c)
-            configure_project
+            CONFIGURE_PROJECT=1
             shift
             ;;
         --build|-b)
-            build_project
+            BUILD_PROJECT=1
             shift
             ;;
         --run|-r)
-            run_executable
+            RUN_EXECUTABLE=1
             shift
             ;;
         --zip|-z)
-            zip_files
+            ZIP_FILES=1
             shift
             ;;
         --exe|-e)
             if [[ -n "$2" && ! "$2" =~ ^- ]]; then
-                EXECUTABLE_NAME="$2"
+                if [ "$IS_SET_CONFIG_GLOBAL" = false ]; then
+                    EXECUTABLE_NAME="$2"
+                fi
                 shift 2
             else
                 echo "Error: --exe requires a valid executable name."
                 exit 1
             fi
+            ;;
+        --proj|-p)
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                if [ "$IS_SET_CONFIG_GLOBAL" = false ]; then
+                    PROJECT_NAME="$2"
+                fi
+                shift 2
+            else
+                echo "Error: --proj requires a valid project name."
+                exit 1
+            fi
+            ;;
+        --ver|-v)
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                if [ "$IS_SET_CONFIG_GLOBAL" = false ]; then
+                    PROJECT_VERSION="$2"
+                fi
+                shift 2
+            else
+                echo "Error: --ver requires a valid project version."
+                exit 1
+            fi
+            ;;
+        --use-nix)
+            USE_VCPKG=OFF
+            BUILD_DIR="build-nix"
+            shift
+            ;;
+        --conf-glob)
+            IS_SET_CONFIG_GLOBAL=true
+            shift
+            ;;
+        --help|-h)
+            usage
             ;;
         *)
             echo "Unknown option: $1"
@@ -112,3 +168,31 @@ while [[ "$#" -gt 0 ]]; do
             ;;
     esac
 done
+
+# Apply global configuration if IS_SET_CONFIG_GLOBAL is true
+if [ "$IS_SET_CONFIG_GLOBAL" = true ]; then
+    PROJECT_NAME="$GLOBAL_PROJECT_NAME"
+    EXECUTABLE_NAME="$GLOBAL_EXECUTABLE_NAME"
+    PROJECT_VERSION="$GLOBAL_PROJECT_VERSION"
+fi
+
+# Execute the requested actions
+if [ "$CONFIGURE_PROJECT" == "1" ]; then
+    configure_project
+fi
+
+if [ "$BUILD_PROJECT" == "1" ]; then
+    # Ensure the project is configured before building
+    if [ ! -d "$BUILD_DIR" ]; then
+        configure_project
+    fi
+    build_project
+fi
+
+if [ "$RUN_EXECUTABLE" == "1" ]; then
+    run_executable
+fi
+
+if [ "$ZIP_FILES" == "1" ]; then
+    zip_files
+fi

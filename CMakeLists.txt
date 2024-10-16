@@ -1,18 +1,4 @@
 cmake_minimum_required(VERSION 3.10)
-# ----------------------------
-# Optional: Print Configuration (Useful for Debugging)
-# ----------------------------
-
-# Display the configuration in the CMake output
-message(STATUS "Project Name: ${PROJECT_NAME}")
-message(STATUS "Executable Name: ${EXECUTABLE_NAME}")
-message(STATUS "Source Files: ${SOURCE_FILES}")
-
-# ----------------------------
-# Set Toolchain File
-# ----------------------------
-# Specify the path to the vcpkg toolchain file
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Path to the vcpkg toolchain file")
 
 # ----------------------------
 # Set Default Variables
@@ -25,22 +11,51 @@ set(PROJECT_NAME "MyProject" CACHE STRING "Name of the project")
 set(EXECUTABLE_NAME "MyExecutable" CACHE STRING "Name of the executable")
 
 # **PROJECT_VERSION**
-set(PROJECT_VERSION "1.0" CACHE STRING "Version of Project")
-
+set(PROJECT_VERSION "1.0" CACHE STRING "Version of the project")
 
 # **SOURCE_FILES**
-# Automatically find all .cpp files in the src directory recursively
 # Automatically find all .cpp files in the src directory recursively
 file(GLOB_RECURSE SOURCE_FILES
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
 )
-# set(SOURCE_FILES src/main.cpp src/math/math.cpp src/util/util.cpp)
+
+# ----------------------------
+# Optional: Print Configuration (Useful for Debugging)
+# ----------------------------
+
+# Display the configuration in the CMake output
+message(STATUS "Initial Project Configuration:")
+message(STATUS "  Project Name: ${PROJECT_NAME}")
+message(STATUS "  Executable Name: ${EXECUTABLE_NAME}")
+message(STATUS "  Project Version: ${PROJECT_VERSION}")
+message(STATUS "  Source Files: ${SOURCE_FILES}")
+
+# ----------------------------
+# Option to Use Vcpkg
+# ----------------------------
+
+option(USE_VCPKG "Use Vcpkg for dependency management" ON)
+
+# ----------------------------
+# Set Toolchain File and Disable Vcpkg Integration if Not Using Vcpkg
+# ----------------------------
+
+if(USE_VCPKG)
+    # Specify the path to the vcpkg toolchain file
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Path to the vcpkg toolchain file" FORCE)
+    message(STATUS "Using Vcpkg for dependency management.")
+else()
+    # Disable Vcpkg integration
+    set(CMAKE_TOOLCHAIN_FILE "" CACHE STRING "Disable Vcpkg toolchain file" FORCE)
+    set(CMAKE_DISABLE_VCPKG_INTEGRATION ON CACHE BOOL "Disable Vcpkg integration")
+    message(STATUS "Not using Vcpkg. Dependencies should be provided by the system or Nix.")
+endif()
 
 # ----------------------------
 # Project Configuration
 # ----------------------------
 
-# Set the project name and version (optional)
+# Set the project name and version
 project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
 
 # Specify the C++ standard
@@ -72,14 +87,17 @@ add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
 # Link Libraries
 # ----------------------------
 
-# Link Boost::math and fmt::fmt to the executable
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE  ftxui::screen ftxui::dom ftxui::component)
+# Link ftxui to the executable
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE ftxui::screen ftxui::dom ftxui::component)
 
 # ----------------------------
-# Optional: Print Configuration (Useful for Debugging)
+# Final Configuration Summary
 # ----------------------------
 
-# Display the configuration in the CMake output
-message(STATUS "Project Name: ${PROJECT_NAME}")
-message(STATUS "Executable Name: ${EXECUTABLE_NAME}")
-message(STATUS "Source Files: ${SOURCE_FILES}")
+# Display the final configuration in the CMake output
+message(STATUS "Final Project Configuration:")
+message(STATUS "  Project Name: ${PROJECT_NAME}")
+message(STATUS "  Executable Name: ${EXECUTABLE_NAME}")
+message(STATUS "  Project Version: ${PROJECT_VERSION}")
+message(STATUS "  Source Files: ${SOURCE_FILES}")
+message(STATUS "  Use Vcpkg: ${USE_VCPKG}")
