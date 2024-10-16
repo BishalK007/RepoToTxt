@@ -43,7 +43,7 @@ pkgs.stdenv.mkDerivation rec {
 
   meta = {
     description = "A tool to convert repositories to text.";
-    homepage = "https://github.com/yourusername/RepoToTxt";
+    homepage = "https://github.com/BishalK007/RepoToTxt";
     license = pkgs.lib.licenses.mit;
     maintainers = with pkgs.lib.maintainers; [ BishalK007 ];
   };
