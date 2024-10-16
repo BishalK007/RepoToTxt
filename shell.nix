@@ -17,6 +17,7 @@ pkgs.mkShell {
     pkgs.curl
     pkgs.jq
     pkgs.wl-clipboard
+    pkgs.xclip
     pkgs.ftxui
   ];
 

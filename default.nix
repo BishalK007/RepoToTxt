@@ -9,10 +9,13 @@ pkgs.stdenv.mkDerivation rec {
   nativeBuildInputs = [
     pkgs.cmake
     pkgs.pkg-config
+    pkgs.bash
   ];
 
   buildInputs = [
     pkgs.ftxui
+    pkgs.wl-clipboard # Runtime dependency for Wayland
+    pkgs.xclip        # Runtime dependency for X11
   ];
 
   cmakeFlags = [
@@ -45,6 +48,6 @@ pkgs.stdenv.mkDerivation rec {
     description = "A tool to convert repositories to text.";
     homepage = "https://github.com/BishalK007/RepoToTxt";
     license = pkgs.lib.licenses.mit;
-    maintainers = with pkgs.lib.maintainers; [ BishalK007 ];
+    maintainers = with pkgs.lib.maintainers; [ "BishalK007" ];
   };
 }

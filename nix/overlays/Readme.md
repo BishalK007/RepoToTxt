@@ -3,7 +3,21 @@
 
 ## Installation
 
-### For NixOS Users
+### For NixOS Users in shell
+1. Clone the repository
+    ```bash
+    git clone https://github.com/BishalK007/RepoToTxt
+    ```
+2. Navigate into the directory
+    ```bash
+    cd RepoToTxt
+    ```
+3. Install using Nix
+    ```bash
+    nix-env -i -f default.nix
+    ```
+
+### For NixOS Users Systemwide
 
 To install **RepoToTxt** system-wide on NixOS, follow these steps:
 
