@@ -9,17 +9,21 @@
             "GROUP_ID": "1000"
         }
     },
-    "settings": {
-        "terminal.integrated.shell.linux": "/bin/bash",
-        "C_Cpp.intelliSenseEngine": "Default",
-        "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "C_Cpp.intelliSenseEngine": "default",
+                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+            },
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "twxs.cmake",
+                "ms-vscode.makefile-tools"
+            ]
+        }
     },
-    "extensions": [
-        "ms-vscode.cpptools",
-        "ms-vscode.cmake-tools",
-        "twxs.cmake",
-        "ms-vscode.makefile-tools"
-    ],
     "forwardPorts": [],
     "postCreateCommand": "sh .devcontainer/post-create.sh",
     "mounts": [
