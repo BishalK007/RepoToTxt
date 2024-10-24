@@ -16,7 +16,14 @@ ENTER_NIX_SHELL=0
 GLOBAL_PROJECT_NAME="RepoToTxt"
 GLOBAL_EXECUTABLE_NAME="repototxt"
 GLOBAL_PROJECT_VERSION="1.0"
-IS_SET_CONFIG_GLOBAL=true  # Default to false; can be set via --conf-glob
+IS_SET_CONFIG_GLOBAL=false  # Default to false; can be set via --conf-glob
+
+# Variables for overlay update
+OVERLAY_FILE=".nix/overlays/repototxt-overlay.nix"
+OWNER="BishalK007"
+REPO="RepoToTxt"
+BRANCH="main"
+GITHUB_REPO_URL="https://github.com/${OWNER}/${REPO}.git"
 
 # Function to display usage
 usage() {
@@ -155,11 +162,6 @@ update_overlay() {
     echo "Updating overlay file..."
     echo "----------------------------------------"
 
-    OVERLAY_FILE=".nix/overlays/repototxt-overlay.nix"
-    OWNER="BishalK007"
-    REPO="RepoToTxt"
-    BRANCH="main"  # Change this if your default branch is different
-
     # Check if the overlay file exists
     if [ ! -f "$OVERLAY_FILE" ]; then
         echo "Overlay file not found at $OVERLAY_FILE."
@@ -179,7 +181,7 @@ update_overlay() {
 
     # Fetch the latest commit hash from the remote repository
     echo "Fetching latest commit hash from remote repository..."
-    LATEST_COMMIT_HASH=$(git ls-remote "https://github.com/${OWNER}/${REPO}.git" "refs/heads/${BRANCH}" | cut -f1)
+    LATEST_COMMIT_HASH=$(git ls-remote "$GITHUB_REPO_URL" "refs/heads/${BRANCH}" | cut -f1)
 
     if [ -z "$LATEST_COMMIT_HASH" ]; then
         echo "Error: Could not fetch the latest commit hash from the remote repository."
@@ -190,7 +192,7 @@ update_overlay() {
 
     # Get the sha256 hash of the source at that commit
     echo "Fetching the repository and computing SHA256..."
-    PREFETCH_OUTPUT=$(nix-prefetch-git --quiet --url "https://github.com/${OWNER}/${REPO}.git" --rev "${LATEST_COMMIT_HASH}")
+    PREFETCH_OUTPUT=$(nix-prefetch-git --quiet --url "$GITHUB_REPO_URL" --rev "${LATEST_COMMIT_HASH}")
     BASE32_HASH=$(echo "$PREFETCH_OUTPUT" | jq -r '.sha256')
     echo "Base32 SHA256: $BASE32_HASH"
 
@@ -203,9 +205,19 @@ update_overlay() {
     ESCAPED_COMMIT_HASH=$(echo "$LATEST_COMMIT_HASH" | sed -e 's/[\/&]/\\&/g')
     ESCAPED_SRI_HASH=$(echo "$SRI_HASH" | sed -e 's/[\/&]/\\&/g')
 
+    # Escape variables for pname_arg, exename_arg, version_arg
+    ESCAPED_PROJECT_NAME=$(echo "$PROJECT_NAME" | sed -e 's/[\/&]/\\&/g')
+    ESCAPED_EXECUTABLE_NAME=$(echo "$EXECUTABLE_NAME" | sed -e 's/[\/&]/\\&/g')
+    ESCAPED_PROJECT_VERSION=$(echo "$PROJECT_VERSION" | sed -e 's/[\/&]/\\&/g')
+
     # Use sed to replace the rev and sha256 lines
     sed -i "s/rev = \".*\";/rev = \"${ESCAPED_COMMIT_HASH}\";/g" "$OVERLAY_FILE"
     sed -i "s/sha256 = \".*\";/sha256 = \"${ESCAPED_SRI_HASH}\";/g" "$OVERLAY_FILE"
+
+    # Use sed to replace the pname_arg, exename_arg, version_arg lines
+    sed -i "s/pname_arg = \".*\";/pname_arg = \"${ESCAPED_PROJECT_NAME}\";/g" "$OVERLAY_FILE"
+    sed -i "s/exename_arg = \".*\";/exename_arg = \"${ESCAPED_EXECUTABLE_NAME}\";/g" "$OVERLAY_FILE"
+    sed -i "s/version_arg = \".*\";/version_arg = \"${ESCAPED_PROJECT_VERSION}\";/g" "$OVERLAY_FILE"
 
     echo "Overlay file updated successfully."
 }
