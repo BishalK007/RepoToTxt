@@ -192,10 +192,9 @@ void UIComponent::Run() {
             }
         }
 
-        // Implement circular navigation
         if (e == Event::ArrowDown) {
             if(!menu_container->Focused()) {
-                if(copy_all_button->Focused()) button_focused_index = 4;
+                if(copy_all_button->Focused()) button_focused_index = 2;
                 else if(cat_all_button->Focused()) button_focused_index = 3;
                 else if(copy_tree_button->Focused()) button_focused_index = 4;
                 else if(cat_tree_button->Focused()) button_focused_index = 4;
