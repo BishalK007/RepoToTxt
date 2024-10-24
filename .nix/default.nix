@@ -45,8 +45,8 @@ pkgs.stdenv.mkDerivation rec {
   '';
 
   meta = with pkgs.lib; {
-    description = "My C++ VCPKG template Project built with Nix";
-    homepage = "https://github.com/BishalK007/cpp-vcpkg-template";
+    description = "A C++ CLI tool for developers";
+    homepage = "https://github.com/BishalK007/RepoToTxt";
     license = licenses.mit;
     maintainers = [ 
       {
