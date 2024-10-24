@@ -1,15 +1,15 @@
 #ifndef BUTTON_COMPONENT_HPP
 #define BUTTON_COMPONENT_HPP
 
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/screen_interactive.hpp> // Add this line
-#include <set>
 #include <filesystem>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>  // Add this line
+#include <set>
 
 namespace fs = std::filesystem;
 
 class ButtonComponent {
-public:
+   public:
     int& button_focused_index;
     ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths, std::string& pressedButton, int& button_focused_index);
     ftxui::Component GetCopyAllButton();
@@ -18,7 +18,7 @@ public:
     ftxui::Component GetCatTreeButton();
     ftxui::Component GetExitButton();
 
-private:
+   private:
     ftxui::Component copy_all_button;
     ftxui::Component cat_all_button;
     ftxui::Component copy_tree_button;
@@ -28,4 +28,4 @@ private:
     std::set<fs::path>& selected_paths;
 };
 
-#endif // BUTTON_COMPONENT_HPP
+#endif  // BUTTON_COMPONENT_HPP

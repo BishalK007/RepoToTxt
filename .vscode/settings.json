@@ -77,6 +77,9 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "variant": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "csignal": "cpp",
+        "list": "cpp",
+        "format": "cpp"
     } // Adjust this path as necessary
 }

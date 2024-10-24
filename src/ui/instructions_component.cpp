@@ -1,18 +1,18 @@
 #include "ui/instructions_component.hpp"
+
 #include <ftxui/dom/elements.hpp>
 
 using namespace ftxui;
 
 InstructionsComponent::InstructionsComponent() {
     instructions = Renderer([&] {
-        return vbox({
-            separator(),
-            text("Instructions:") | bold,
-            text("↑/↓/→/← Arrow Keys: Navigate"),
-            text("Enter: Select/Deselect"),
-            text("O/o/Spacebar: Enter/Exit Directory"),
-            text("Esc: Jump to 'Copy All' Button")
-        }) | border;
+        return vbox({separator(),
+                     text("Instructions:") | bold,
+                     text("↑/↓/→/← Arrow Keys: Navigate"),
+                     text("Enter: Select/Deselect"),
+                     text("O/o/Spacebar: Enter/Exit Directory"),
+                     text("Esc: Jump to 'Copy All' Button")}) |
+               border;
     });
 }
 

@@ -1,12 +1,11 @@
 #include "ui/button_component.hpp"
+
 #include <iostream>
 
 using namespace ftxui;
 
 ButtonComponent::ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::path>& selected_paths, std::string& pressed_button, int& button_focused_index)
-    : screen(screen), selected_paths(selected_paths),
-    button_focused_index(button_focused_index)
-{
+    : screen(screen), selected_paths(selected_paths), button_focused_index(button_focused_index) {
     copy_all_button = Button("Copy All", [&] {
         pressed_button = "CoA";
         screen.ExitLoopClosure()();
@@ -26,7 +25,7 @@ ButtonComponent::ButtonComponent(ftxui::ScreenInteractive& screen, std::set<fs::
 
     exit_button = Button("Exit", [&] {
         pressed_button = "Ex";
-        selected_paths.clear(); // Clear selections
+        selected_paths.clear();  // Clear selections
         screen.ExitLoopClosure()();
     });
 }

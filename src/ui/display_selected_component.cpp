@@ -1,12 +1,12 @@
 #include "ui/display_selected_component.hpp"
-#include <ftxui/dom/elements.hpp>
+
 #include <algorithm>
+#include <ftxui/dom/elements.hpp>
 
 using namespace ftxui;
 
 DisplaySelectedComponent::DisplaySelectedComponent(std::set<fs::path>& selected_paths, const fs::path& root_path)
-    : selected_paths(selected_paths), root_path(root_path)
-{
+    : selected_paths(selected_paths), root_path(root_path) {
     display_selected = Renderer([&] {
         // Build the tree structure from selected_paths
         TreeNode root;
@@ -60,18 +60,14 @@ ftxui::Element DisplaySelectedComponent::RenderTree(const TreeNode& node, int de
         auto node_name = text(child.name);
 
         if (child.is_directory || !child.children.empty()) {
-            elements.push_back(hbox({
-                indent,
-                text("📁 ") | color(Color::Yellow),
-                node_name | bold
-            }));
+            elements.push_back(hbox({indent,
+                                     text("📁 ") | color(Color::Yellow),
+                                     node_name | bold}));
             elements.push_back(RenderTree(child, depth + 1));
         } else {
-            elements.push_back(hbox({
-                indent,
-                text("📄 ") | color(Color::Green),
-                node_name
-            }));
+            elements.push_back(hbox({indent,
+                                     text("📄 ") | color(Color::Green),
+                                     node_name}));
         }
     }
 

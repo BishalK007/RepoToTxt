@@ -1,14 +1,15 @@
 #include "ui/menu_component.hpp"
-#include "utils/utils.hpp"
 
+#include <algorithm>
+#include <filesystem>
+#include <ftxui/component/animation.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
-#include <ftxui/component/animation.hpp>
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/screen_interactive.hpp>
-#include <filesystem>
-#include <algorithm>
+#include <ftxui/dom/elements.hpp>
+
+#include "utils/utils.hpp"
 
 using namespace ftxui;
 
@@ -17,14 +18,13 @@ MenuComponent::MenuComponent(
     fs::path& current_directory,
     std::vector<std::string>& options,
     std::vector<std::unique_ptr<bool>>& checkbox_states,
-    std::set<fs::path>& selected_paths
-) : focused_index(focused_index),
-    current_directory(current_directory),
-    options(options),
-    checkbox_states(checkbox_states),
-    selected_paths(selected_paths),
-    menu_container(Container::Vertical({}, &focused_index))
-{
+    std::set<fs::path>& selected_paths)
+    : focused_index(focused_index),
+      current_directory(current_directory),
+      options(options),
+      checkbox_states(checkbox_states),
+      selected_paths(selected_paths),
+      menu_container(Container::Vertical({}, &focused_index)) {
     BuildMenu();
 }
 
@@ -40,7 +40,7 @@ void MenuComponent::BuildMenu() {
     menu_container->DetachAllChildren();
 
     // Get directory entries
-    options.push_back(".."); // Option to move up one directory
+    options.push_back("..");  // Option to move up one directory
     for (const auto& entry : fs::directory_iterator(current_directory)) {
         options.push_back(entry.path().filename().string());
     }
@@ -134,8 +134,7 @@ void MenuComponent::BuildMenu() {
         auto checkbox = Checkbox(
             options[i] + (is_directory ? "/" : ""),
             checkbox_states[i].get(),
-            checkbox_option
-        );
+            checkbox_option);
         menu_container->Add(checkbox);
     }
 }
