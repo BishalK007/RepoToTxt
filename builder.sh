@@ -8,12 +8,13 @@ BUILD_DIR="build"
 PROJECT_NAME="MyProject"
 EXECUTABLE_NAME="MyExecutable"
 PROJECT_VERSION="1.0"
-USE_VCPKG=OFF
+USE_VCPKG=ON
+ENTER_NIX_SHELL=0
 
 # ----------- GLOBAL CONFIGURATION ------------- #
 # Set these values as desired for your global configuration
-GLOBAL_PROJECT_NAME="RepoToTxt"
-GLOBAL_EXECUTABLE_NAME="repototxt"
+GLOBAL_PROJECT_NAME="MyProjectGlobal"
+GLOBAL_EXECUTABLE_NAME="projglobal"
 GLOBAL_PROJECT_VERSION="1.0"
 IS_SET_CONFIG_GLOBAL=false  # Default to false; can be set via --conf-glob
 
@@ -30,6 +31,7 @@ usage() {
     echo "  --proj, -p NAME    Specify the project name"
     echo "  --ver, -v VER      Specify the project version"
     echo "  --use-nix          Build without using Vcpkg (for Nix environment)"
+    echo "  --nix-shell        Enter Nix shell environment"
     echo "  --conf-glob        Use global configuration settings"
     echo "  --help, -h         Display this help message"
     exit 1
@@ -44,23 +46,54 @@ configure_project() {
     # Create build directory if it doesn't exist
     mkdir -p "$BUILD_DIR"
 
-    # Run CMake configuration
-    cmake -B "$BUILD_DIR" -S . \
-        -DUSE_VCPKG="$USE_VCPKG" \
-        -DEXECUTABLE_NAME="$EXECUTABLE_NAME" \
-        -DPROJECT_NAME="$PROJECT_NAME" \
-        -DPROJECT_VERSION="$PROJECT_VERSION"
+    if [ "$USE_VCPKG" = "OFF" ]; then
+        echo "Using Nix environment for configuration."
+        # Assume Nix environment is already set up
+        cmake -B "$BUILD_DIR" -S . \
+            -DUSE_VCPKG="$USE_VCPKG" \
+            -DEXECUTABLE_NAME="$EXECUTABLE_NAME" \
+            -DPROJECT_NAME="$PROJECT_NAME" \
+            -DPROJECT_VERSION="$PROJECT_VERSION"
+    else
+        cmake -B "$BUILD_DIR" -S . \
+            -DUSE_VCPKG="$USE_VCPKG" \
+            -DEXECUTABLE_NAME="$EXECUTABLE_NAME" \
+            -DPROJECT_NAME="$PROJECT_NAME" \
+            -DPROJECT_VERSION="$PROJECT_VERSION"
+    fi
 
     echo "Configuration complete."
 }
 
-# Function to build the CMake project
+# Function to build the project
 build_project() {
     echo "----------------------------------------"
-    echo "Building CMake project..."
+    echo "Building project..."
     echo "----------------------------------------"
 
-    cmake --build "$BUILD_DIR"
+    if [ "$USE_VCPKG" = "OFF" ]; then
+        echo "Building using Nix environment."
+
+        # Remove existing build-nix symlink if it exists to prevent conflicts
+        if [ -L "build-nix" ] || [ -e "build-nix" ]; then
+            echo "Removing existing build-nix symlink or directory..."
+            rm -rf build-nix
+        fi
+
+        # Run nix-build with custom output symlink name
+        nix-build .nix/default.nix -o build-nix --argstr pname_arg "${PROJECT_NAME}" --argstr exename_arg "${EXECUTABLE_NAME}" --argstr version_arg "${PROJECT_VERSION}"
+    else
+        echo "Building using Vcpkg and CMake."
+
+        # Ensure the project is configured before building
+        if [ ! -d "$BUILD_DIR" ]; then
+            echo "Build directory not found. Configuring project..."
+            configure_project
+        fi
+
+        # Build the project using CMake
+        cmake --build "$BUILD_DIR"
+    fi
 
     echo "Build complete."
 }
@@ -71,13 +104,27 @@ run_executable() {
     echo "Running the executable..."
     echo "----------------------------------------"
 
-    EXECUTABLE_PATH="$BUILD_DIR/$EXECUTABLE_NAME"
+    if [ "$USE_VCPKG" = "OFF" ]; then
+        # Path to the executable in the Nix build output
+        EXECUTABLE_PATH="./${BUILD_DIR}/bin/${EXECUTABLE_NAME}"
 
-    if [ -f "$EXECUTABLE_PATH" ]; then
-        ./"$EXECUTABLE_PATH"
+        if [ -f "$EXECUTABLE_PATH" ]; then
+            echo "Executing $EXECUTABLE_PATH"
+            "$EXECUTABLE_PATH"
+        else
+            echo "Executable $EXECUTABLE_NAME not found in ${BUILD_DIR}/bin/. Please build the project first."
+            exit 1
+        fi
     else
-        echo "Executable $EXECUTABLE_NAME not found in $BUILD_DIR. Please build the project first."
-        exit 1
+        EXECUTABLE_PATH="$BUILD_DIR/$EXECUTABLE_NAME"
+
+        if [ -f "$EXECUTABLE_PATH" ]; then
+            echo "Executing $EXECUTABLE_PATH"
+            ./"$EXECUTABLE_PATH"
+        else
+            echo "Executable $EXECUTABLE_NAME not found in $BUILD_DIR. Please build the project first."
+            exit 1
+        fi
     fi
 }
 
@@ -88,9 +135,17 @@ zip_files() {
     echo "----------------------------------------"
 
     # Create the zip file excluding the specified directories and files
-    zip -r files.zip . -x "files.zip" ".*" "$BUILD_DIR/*" "build-nix/*" "vcpkg/*"
+    zip -r files.zip . -x "files.zip" ".*" "build/*" "build-nix"  "vcpkg/*" "ReadME.md"
 
     echo "Zipping complete. Created files.zip."
+}
+
+# Function to enter Nix shell
+enter_nix_shell() {
+    echo "----------------------------------------"
+    echo "Entering Nix shell environment..."
+    echo "----------------------------------------"
+    nix-shell .nix/shell.nix
 }
 
 # Check if no arguments were provided
@@ -155,6 +210,10 @@ while [[ "$#" -gt 0 ]]; do
             BUILD_DIR="build-nix"
             shift
             ;;
+        --nix-shell)
+            ENTER_NIX_SHELL=1
+            shift
+            ;;
         --conf-glob)
             IS_SET_CONFIG_GLOBAL=true
             shift
@@ -176,16 +235,18 @@ if [ "$IS_SET_CONFIG_GLOBAL" = true ]; then
     PROJECT_VERSION="$GLOBAL_PROJECT_VERSION"
 fi
 
+# Enter Nix shell if requested
+if [ "$ENTER_NIX_SHELL" == "1" ]; then
+    enter_nix_shell
+    exit 0
+fi
+
 # Execute the requested actions
 if [ "$CONFIGURE_PROJECT" == "1" ]; then
     configure_project
 fi
 
 if [ "$BUILD_PROJECT" == "1" ]; then
-    # Ensure the project is configured before building
-    if [ ! -d "$BUILD_DIR" ]; then
-        configure_project
-    fi
     build_project
 fi
 

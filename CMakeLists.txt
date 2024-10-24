@@ -65,9 +65,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # ----------------------------
 # Package Management
 # ----------------------------
-
+if(USE_VCPKG)
+    find_package(ftxui REQUIRED)
+else()
+    find_package(ftxui REQUIRED)
+endif()
 # Find Packages and Components
-find_package(ftxui REQUIRED)
 
 # ----------------------------
 # Include Directories
@@ -86,9 +89,12 @@ add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
 # ----------------------------
 # Link Libraries
 # ----------------------------
-
+if(USE_VCPKG)
+    target_link_libraries(${EXECUTABLE_NAME} PRIVATE ftxui::screen ftxui::dom ftxui::component)
+else()
+    target_link_libraries(${EXECUTABLE_NAME} PRIVATE ftxui::screen ftxui::dom ftxui::component)
+endif()
 # Link ftxui to the executable
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE ftxui::screen ftxui::dom ftxui::component)
 
 # ----------------------------
 # Final Configuration Summary
