@@ -119,52 +119,55 @@ void UIComponent::Run() {
                                                button_container,
                                                instructions});
 
-    auto left_renderer = Renderer(left_component, [&] { return vbox({
-                                                            text("Current Directory: " + current_directory.string()) | bold | hcenter,
-                                                            separator(),
-                                                            menu_container->Render() | vscroll_indicator | frame | flex,
-                                                            separator(),
-                                                            flexbox({
-                                                                        // First Row: copy_all_button and cat_all_button
-                                                                        flexbox({
-                                                                                    copy_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-                                                                                    cat_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-                                                                                },
-                                                                                FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
+    auto left_renderer = Renderer(left_component,
+                                  [&] { return vbox({
+                                            text("Current Directory: " + current_directory.string()) | bold | hcenter,
+                                            separator(),
+                                            menu_container->Render() | vscroll_indicator | frame | flex,
+                                            separator(),
+                                            flexbox({
+                                                        // First Row: copy_all_button and cat_all_button
+                                                        flexbox({
+                                                                    copy_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                                                                    cat_all_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                                                                },
+                                                                FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
 
-                                                                        // Second Row: copy_tree_button and cat_tree_button
-                                                                        flexbox({
-                                                                                    copy_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-                                                                                    cat_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
-                                                                                },
-                                                                                FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
+                                                        // Second Row: copy_tree_button and cat_tree_button
+                                                        flexbox({
+                                                                    copy_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                                                                    cat_tree_button->Render() | size(HEIGHT, EQUAL, 3) | flex,
+                                                                },
+                                                                FlexboxConfig().Set(FlexboxConfig::Direction::Row)),
 
-                                                                        // Third Row: exit_button spanning both columns
-                                                                        exit_button->Render() | size(HEIGHT, EQUAL, 3) | flex | flex_grow,
-                                                                    },
-                                                                    FlexboxConfig().Set(FlexboxConfig::Direction::Column)  // Stack rows vertically
-                                                                        .Set(FlexboxConfig::JustifyContent::Center)        // Center vertically
-                                                                        .Set(FlexboxConfig::AlignItems::Center))           // Center horizontally
-                                                                | hcenter,
-                                                            instructions->Render(),
-                                                        }); });
+                                                        // Third Row: exit_button spanning both columns
+                                                        exit_button->Render() | size(HEIGHT, EQUAL, 3) | flex | flex_grow,
+                                                    },
+                                                    FlexboxConfig().Set(FlexboxConfig::Direction::Column)  // Stack rows vertically
+                                                        .Set(FlexboxConfig::JustifyContent::Center)        // Center vertically
+                                                        .Set(FlexboxConfig::AlignItems::Center))           // Center horizontally
+                                                | hcenter,
+                                            instructions->Render(),
+                                        }); });
 
     // Right Component: Display selected items
-    auto right_component = Renderer(display_selected, [&] { return vbox({
-                                                                       text("Selected Items") | bold | hcenter,
-                                                                       separator(),
-                                                                       display_selected->Render() | flex,
-                                                                   }) |
-                                                                   border; });
+    auto right_component = Renderer(display_selected,
+                                    [&] { return vbox({
+                                                     text("Selected Items") | bold | hcenter,
+                                                     separator(),
+                                                     display_selected->Render() | flex,
+                                                 }) |
+                                                 border; });
 
     int left_size = Screen::Create(Dimension::Full()).dimx() / 3;
 
     // Create a container with resizable left and right components
     auto main_container = ResizableSplitLeft(left_renderer, right_component, &left_size);
 
-    auto main_container_renderer = Renderer(main_container, [&] { return main_container->Render() |
-                                                                         size(WIDTH, EQUAL, Screen::Create(Dimension::Full()).dimx()) |
-                                                                         size(HEIGHT, EQUAL, Screen::Create(Dimension::Full()).dimy()); });
+    auto main_container_renderer = Renderer(main_container,
+                                            [&] { return main_container->Render() |
+                                                         size(WIDTH, EQUAL, Screen::Create(Dimension::Full()).dimx()) |
+                                                         size(HEIGHT, EQUAL, Screen::Create(Dimension::Full()).dimy()); });
 
     // Event handling with circular navigation for the checkboxes
     auto main_container_with_events = CatchEvent(main_container_renderer, [this, menu_container, copy_all_button, cat_all_button, copy_tree_button, cat_tree_button, exit_button, button_container](Event e) -> bool {
