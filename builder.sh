@@ -206,30 +206,28 @@ update_overlay() {
     echo "Base32 SHA256: $BASE32_HASH"
 
     # Convert the base32 hash to SRI format (base64 with sha256- prefix)
-    SRI_HASH=$(nix --extra-experimental-features nix-command hash to-sri --type sha256 "$BASE32_HASH")
+    SRI_HASH=$(nix --extra-experimental-features nix-command hash to-sri --type sha256 "$BASE32_HASH"
+    )
     echo "SRI-formatted SHA256: $SRI_HASH"
+
+    # Read the current version from the VERSION file
+    CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
+    echo "Current version: $CURRENT_VERSION"
 
     # Update the overlay file
     # Escape slashes and other special characters for sed
     ESCAPED_COMMIT_HASH=$(echo "$LATEST_COMMIT_HASH" | sed -e 's/[\/&]/\\&/g')
     ESCAPED_SRI_HASH=$(echo "$SRI_HASH" | sed -e 's/[\/&]/\\&/g')
+    ESCAPED_PROJECT_VERSION=$(echo "$CURRENT_VERSION" | sed -e 's/[\/&]/\\&/g')
 
-    # Escape variables for pname_arg, exename_arg, version_arg
-    ESCAPED_PROJECT_NAME=$(echo "$PROJECT_NAME" | sed -e 's/[\/&]/\\&/g')
-    ESCAPED_EXECUTABLE_NAME=$(echo "$EXECUTABLE_NAME" | sed -e 's/[\/&]/\\&/g')
-    ESCAPED_PROJECT_VERSION=$(echo "$PROJECT_VERSION" | sed -e 's/[\/&]/\\&/g')
-
-    # Use sed to replace the rev and sha256 lines
+    # Use sed to replace the rev, sha256, and version_arg lines
     sed -i "s/rev = \".*\";/rev = \"${ESCAPED_COMMIT_HASH}\";/g" "$OVERLAY_FILE"
     sed -i "s/sha256 = \".*\";/sha256 = \"${ESCAPED_SRI_HASH}\";/g" "$OVERLAY_FILE"
-
-    # Use sed to replace the pname_arg, exename_arg, version_arg lines
-    sed -i "s/pname_arg = \".*\";/pname_arg = \"${ESCAPED_PROJECT_NAME}\";/g" "$OVERLAY_FILE"
-    sed -i "s/exename_arg = \".*\";/exename_arg = \"${ESCAPED_EXECUTABLE_NAME}\";/g" "$OVERLAY_FILE"
     sed -i "s/version_arg = \".*\";/version_arg = \"${ESCAPED_PROJECT_VERSION}\";/g" "$OVERLAY_FILE"
 
     echo "Overlay file updated successfully."
 }
+
 
 # Check if no arguments were provided
 if [ "$#" -eq 0 ]; then

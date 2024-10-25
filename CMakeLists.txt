@@ -10,14 +10,12 @@ set(PROJECT_NAME "RepoToTxt" CACHE STRING "Name of the project")
 # **EXECUTABLE_NAME**
 set(EXECUTABLE_NAME "repototxt" CACHE STRING "Name of the executable")
 
-# **PROJECT_VERSION**
-if(NOT DEFINED PROJECT_VERSION)
-    # Read version from VERSION file
-    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
-    message(STATUS "Read version from VERSION file: ${PROJECT_VERSION}")
-else()
-    message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
-endif()
+# **USE_VCPKG**
+option(USE_VCPKG "Use Vcpkg for dependency management" ON)
+
+# ----------------------------
+# Set Source Files
+# ----------------------------
 
 # **SOURCE_FILES**
 # Automatically find all .cpp files in the src directory recursively
@@ -42,12 +40,6 @@ else()
     message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
 endif()
 
-# ----------------------------
-# Project Configuration
-# ----------------------------
-
-# Set the project name and version
-project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
 
 
 # ----------------------------
@@ -82,6 +74,17 @@ project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+
+# ----------------------------
+# Source Files
+# ----------------------------
+
+# Automatically find all .cpp files in the src directory recursively
+file(GLOB_RECURSE SOURCE_FILES
+    "${CMAKE_SOURCE_DIR}/src/*.cpp"
+)
+
+
 # ----------------------------
 # Package Management
 # ----------------------------
@@ -90,6 +93,8 @@ if(USE_VCPKG)
 else()
     find_package(ftxui REQUIRED)
 endif()
+
+
 # ----------------------------
 # Include Directories
 # ----------------------------
@@ -99,6 +104,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Add the build directory's include directory for generated headers
 include_directories(${CMAKE_BINARY_DIR}/include)
+
 
 # ----------------------------
 # Generate version.hpp
@@ -111,12 +117,14 @@ configure_file(
     @ONLY
 )
 
+
 # ----------------------------
 # Add Executable
 # ----------------------------
 
 # Add the executable with the specified source files
 add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
+
 
 # ----------------------------
 # Link Libraries
@@ -127,6 +135,7 @@ else()
     target_link_libraries(${EXECUTABLE_NAME} PRIVATE ftxui::screen ftxui::dom ftxui::component)
 endif()
 # Link ftxui to the executable
+
 
 # ----------------------------
 # Final Configuration Summary
