@@ -24,8 +24,6 @@ pkgs.stdenv.mkDerivation rec {
 
   buildInputs = [
     pkgs.ftxui
-    pkgs.wl-clipboard
-    pkgs.xclip
   ];
 
   cmakeFlags = [
