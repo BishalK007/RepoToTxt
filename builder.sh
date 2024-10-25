@@ -7,15 +7,24 @@ set -e
 BUILD_DIR="build"
 PROJECT_NAME="RepoToTxt"
 EXECUTABLE_NAME="repototxt"
-PROJECT_VERSION="1.0"
 USE_VCPKG=ON
 ENTER_NIX_SHELL=0
+
+# ----------- VERSION CONFIGURATION ------------- #
+# Read version from VERSION file unless overridden
+if [ -z "$PROJECT_VERSION" ]; then
+    if [ -f "VERSION" ]; then
+        PROJECT_VERSION=$(cat VERSION | tr -d '[:space:]')
+    else
+        PROJECT_VERSION="1.0.0"
+    fi
+fi
 
 # ----------- GLOBAL CONFIGURATION ------------- #
 # Set these values as desired for your global configuration
 GLOBAL_PROJECT_NAME="RepoToTxt"
 GLOBAL_EXECUTABLE_NAME="repototxt"
-GLOBAL_PROJECT_VERSION="1.0"
+GLOBAL_PROJECT_VERSION="$PROJECT_VERSION" # Uses the global version from the VERSION file
 IS_SET_CONFIG_GLOBAL=false  # Default to false; can be set via --conf-glob
 
 # Variables for overlay update
@@ -221,7 +230,6 @@ update_overlay() {
 
     echo "Overlay file updated successfully."
 }
-
 
 # Check if no arguments were provided
 if [ "$#" -eq 0 ]; then

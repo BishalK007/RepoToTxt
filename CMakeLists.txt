@@ -11,7 +11,21 @@ set(PROJECT_NAME "MyProject" CACHE STRING "Name of the project")
 set(EXECUTABLE_NAME "MyExecutable" CACHE STRING "Name of the executable")
 
 # **PROJECT_VERSION**
-set(PROJECT_VERSION "1.0" CACHE STRING "Version of the project")
+if(NOT DEFINED PROJECT_VERSION)
+    # Read version from VERSION file
+    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
+    message(STATUS "Read version from VERSION file: ${PROJECT_VERSION}")
+else()
+    message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
+endif()
+
+# ----------------------------
+# Project Configuration
+# ----------------------------
+
+# Set the project name and version
+project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
+
 
 # **SOURCE_FILES**
 # Automatically find all .cpp files in the src directory recursively
