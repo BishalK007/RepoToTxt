@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 
 # Install essential build tools and dependencies, including locales
-RUN apt-get install -y build-essential curl tar unzip zip wget ninja-build pkg-config libssl-dev sudo locales
+RUN apt-get install -y build-essential curl tar unzip zip wget ninja-build pkg-config libssl-dev sudo locales devscripts debhelper dh-make cmake pkg-config
 
 # Install additional tools
 RUN apt-get install -y git jq wl-clipboard
