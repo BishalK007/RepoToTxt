@@ -39,6 +39,7 @@
         "XDG_RUNTIME_DIR": "/run/user/1000"
     },
     "runArgs": [
+        "--name", "repototxt_ubuntu_container",
         "--security-opt", "label=type:unconfined"
     ]
 }
