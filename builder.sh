@@ -9,6 +9,7 @@ PROJECT_NAME="RepoToTxt"
 EXECUTABLE_NAME="repototxt"
 USE_VCPKG=ON
 ENTER_NIX_SHELL=0
+BUILD_DEB=0  # Flag for building .deb package
 
 # ----------- VERSION CONFIGURATION ------------- #
 # Read version from VERSION file unless overridden
@@ -21,7 +22,7 @@ if [ -z "$PROJECT_VERSION" ]; then
 fi
 
 # ----------- GLOBAL CONFIGURATION ------------- #
-# Set these values as desired for your global configuration
+# Read global configuration from environment or other sources if needed
 GLOBAL_PROJECT_NAME="RepoToTxt"
 GLOBAL_EXECUTABLE_NAME="repototxt"
 GLOBAL_PROJECT_VERSION="$PROJECT_VERSION" # Uses the global version from the VERSION file
@@ -50,6 +51,7 @@ usage() {
     echo "  --nix-shell        Enter Nix shell environment"
     echo "  --conf-glob        Use global configuration settings"
     echo "  --update-overlay   Update the overlay file with the latest commit and SHA256"
+    echo "  --build-deb        Build a .deb package using CPack"
     echo "  --help, -h         Display this help message"
     exit 1
 }
@@ -68,14 +70,14 @@ configure_project() {
         # Assume Nix environment is already set up
         cmake -B "$BUILD_DIR" -S . \
             -DUSE_VCPKG="$USE_VCPKG" \
-            -DEXECUTABLE_NAME="$EXECUTABLE_NAME" \
             -DPROJECT_NAME="$PROJECT_NAME" \
+            -DEXECUTABLE_NAME="$EXECUTABLE_NAME" \
             -DPROJECT_VERSION="$PROJECT_VERSION"
     else
         cmake -B "$BUILD_DIR" -S . \
             -DUSE_VCPKG="$USE_VCPKG" \
-            -DEXECUTABLE_NAME="$EXECUTABLE_NAME" \
             -DPROJECT_NAME="$PROJECT_NAME" \
+            -DEXECUTABLE_NAME="$EXECUTABLE_NAME" \
             -DPROJECT_VERSION="$PROJECT_VERSION"
     fi
 
@@ -152,7 +154,7 @@ zip_files() {
     echo "----------------------------------------"
 
     # Create the zip file excluding the specified directories and files
-    zip -r files.zip . -x "files.zip" ".*" "build/*" "build-nix"  "vcpkg/*" "ReadME.md"
+    zip -r files.zip . -x "files.zip" ".*" "build/*" "build-nix" "vcpkg/*" "ReadME.md"
 
     echo "Zipping complete. Created files.zip."
 }
@@ -228,6 +230,26 @@ update_overlay() {
     echo "Overlay file updated successfully."
 }
 
+# Function to build the Debian package using CPack
+build_deb_package() {
+    echo "----------------------------------------"
+    echo "Building .deb package using CPack..."
+    echo "----------------------------------------"
+
+    # Ensure the project is configured
+    if [ ! -d "$BUILD_DIR" ]; then
+        echo "Build directory not found. Configuring project..."
+        configure_project
+    fi
+
+    # Navigate to the build directory
+    cd "$BUILD_DIR"
+
+    # Run CPack to generate the .deb package
+    cpack -G DEB
+
+    echo ".deb package built successfully."
+}
 
 # Check if no arguments were provided
 if [ "$#" -eq 0 ]; then
@@ -303,6 +325,10 @@ while [[ "$#" -gt 0 ]]; do
             UPDATE_OVERLAY=1
             shift
             ;;
+        --build-deb)
+            BUILD_DEB=1
+            shift
+            ;;
         --help|-h)
             usage
             ;;
@@ -345,4 +371,8 @@ fi
 
 if [ "$UPDATE_OVERLAY" == "1" ]; then
     update_overlay
+fi
+
+if [ "$BUILD_DEB" == "1" ]; then
+    build_deb_package
 fi
