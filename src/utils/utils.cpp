@@ -46,17 +46,17 @@ bool IsSubPath(const std::filesystem::path& path1, const std::filesystem::path& 
  * @param out_stream The output stream to write the tree to.
  */
 void PrintDirectoryTreeHelper(const std::filesystem::path& path, const std::string& prefix, bool isLast, std::ostream& out_stream) {
-    out_stream << prefix;
-
-    if (isLast) {
-        out_stream << "└── ";
-    } else {
-        out_stream << "├── ";
-    }
-
-    out_stream << path.filename().string() << "\n";
-
+#ifdef _WIN32
+    // ASCII symbols for Windows
+    std::string branch = isLast ? "+-- " : "|-- ";
+    std::string new_prefix = prefix + (isLast ? "    " : "|   ");
+#else
+    // Unicode symbols for other platforms
+    std::string branch = isLast ? "└── " : "├── ";
     std::string new_prefix = prefix + (isLast ? "    " : "│   ");
+#endif
+
+    out_stream << prefix << branch << path.filename().string() << "\n";
 
     if (std::filesystem::is_directory(path)) {
         std::vector<std::filesystem::directory_entry> entries;
@@ -276,7 +276,7 @@ bool CopyToClipboard(const std::string& text) {
         return false;
     }
 
-    // Write the text to the clipboard
+    // Write the ASCII-only text to the clipboard
     size_t bytes_written = fwrite(text.c_str(), sizeof(char), text.size(), pipe);
     if (bytes_written != text.size()) {
         perror("fwrite");
@@ -299,4 +299,4 @@ bool CopyToClipboard(const std::string& text) {
 #endif
 }
 
-}  // namespace Utils
+}
