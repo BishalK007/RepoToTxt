@@ -10,18 +10,13 @@ set(PROJECT_NAME "RepoToTxt" CACHE STRING "Name of the project")
 # **EXECUTABLE_NAME**
 set(EXECUTABLE_NAME "repototxt" CACHE STRING "Name of the executable")
 
-# **USE_VCPKG**
-option(USE_VCPKG "Use Vcpkg for dependency management" ON)
+# **PROJECT_VERSION**
+if(NOT DEFINED PROJECT_VERSION)
+    # Read version from VERSION file
+    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
+endif()
 
-# ----------------------------
-# Set Source Files
-# ----------------------------
 
-# **SOURCE_FILES**
-# Automatically find all .cpp files in the src directory recursively
-file(GLOB_RECURSE SOURCE_FILES
-    "${CMAKE_SOURCE_DIR}/src/*.cpp"
-)
 
 # ----------------------------
 # Optional: Print Configuration (Useful for Debugging)
@@ -33,8 +28,6 @@ message(STATUS "  Project Name: ${PROJECT_NAME}")
 message(STATUS "  Executable Name: ${EXECUTABLE_NAME}")
 # PROJECT_VERSION will be printed after it's determined
 if(NOT DEFINED PROJECT_VERSION)
-    # Read version from VERSION file
-    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
     message(STATUS "Read version from VERSION file: ${PROJECT_VERSION}")
 else()
     message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
