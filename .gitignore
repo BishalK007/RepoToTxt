@@ -6,6 +6,8 @@ build/*
 build-nix/*
 build/.*
 build-nix/.*
+build-win/*
+build-win/.*
 file.zip
 x.txt
 files.zip

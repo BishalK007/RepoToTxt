@@ -80,6 +80,7 @@
         "set": "cpp",
         "csignal": "cpp",
         "list": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "filesystem": "cpp"
     } // Adjust this path as necessary
 }
