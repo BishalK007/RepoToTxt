@@ -12,10 +12,15 @@ set(EXECUTABLE_NAME "repototxt" CACHE STRING "Name of the executable")
 
 # **PROJECT_VERSION**
 if(NOT DEFINED PROJECT_VERSION)
-    # Read version from VERSION file
-    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
+# Read version from VERSION file
+file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
 endif()
 
+# **MAINTAINER NAME**
+set(MAINTAINER_NAME "Bishal Karmakar" CACHE STRING "Name of maintainer")
+
+# **MAINTAINER EMAIL**
+set(MAINTAINER_MAIL "bishal@bishal.pro" CACHE STRING "E-Mail of maintainer")
 
 
 # ----------------------------
@@ -148,9 +153,9 @@ message(STATUS "  Use Vcpkg: ${USE_VCPKG}")
 # ----------------------------
 
 # Set CPack configurations
-set(CPACK_PACKAGE_NAME "RepoToTxt")
+set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-set(CPACK_PACKAGE_CONTACT "bishal@bishal.pro")
+set(CPACK_PACKAGE_CONTACT "${MAINTAINER_MAIL}")
 
 # Specify the generator for Debian packages
 set(CPACK_GENERATOR "DEB")
@@ -163,16 +168,16 @@ else()
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Bishal Karmakar") # Required for DEB
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${MAINTAINER_NAME}") # Required for DEB
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.7), libstdc++6 (>= 5)")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "A C++ CLI tool for developers that allows you to copy and display repository content.")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/BishalK007/RepoToTxt")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/BishalK007/cpp-vcpkg-template/")
 
 # Define installation directories
 install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
-install(FILES VERSION ReadMe.md DESTINATION /usr/share/doc/RepoToTxt)
+install(FILES VERSION ReadMe.md DESTINATION /usr/share/doc/${PROJECT_NAME})
 
 # Include CPack configurations
 include(CPack)

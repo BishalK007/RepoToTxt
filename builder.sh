@@ -8,8 +8,6 @@ BUILD_DIR="build"
 PROJECT_NAME="RepoToTxt"
 EXECUTABLE_NAME="repototxt"
 USE_VCPKG=ON
-ENTER_NIX_SHELL=0
-BUILD_DEB=0  # Flag for building .deb package
 
 # ----------- VERSION CONFIGURATION ------------- #
 # Read version from VERSION file unless overridden
