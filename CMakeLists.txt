@@ -11,7 +11,13 @@ set(PROJECT_NAME "RepoToTxt" CACHE STRING "Name of the project")
 set(EXECUTABLE_NAME "repototxt" CACHE STRING "Name of the executable")
 
 # **PROJECT_VERSION**
-# This will be set based on the VERSION file or overridden via builder.sh
+if(NOT DEFINED PROJECT_VERSION)
+    # Read version from VERSION file
+    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
+    message(STATUS "Read version from VERSION file: ${PROJECT_VERSION}")
+else()
+    message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
+endif()
 
 # **SOURCE_FILES**
 # Automatically find all .cpp files in the src directory recursively
