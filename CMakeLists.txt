@@ -5,27 +5,13 @@ cmake_minimum_required(VERSION 3.10)
 # ----------------------------
 
 # **PROJECT_NAME**
-set(PROJECT_NAME "MyProject" CACHE STRING "Name of the project")
+set(PROJECT_NAME "RepoToTxt" CACHE STRING "Name of the project")
 
 # **EXECUTABLE_NAME**
-set(EXECUTABLE_NAME "MyExecutable" CACHE STRING "Name of the executable")
+set(EXECUTABLE_NAME "repototxt" CACHE STRING "Name of the executable")
 
 # **PROJECT_VERSION**
-if(NOT DEFINED PROJECT_VERSION)
-    # Read version from VERSION file
-    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
-    message(STATUS "Read version from VERSION file: ${PROJECT_VERSION}")
-else()
-    message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
-endif()
-
-# ----------------------------
-# Project Configuration
-# ----------------------------
-
-# Set the project name and version
-project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
-
+# This will be set based on the VERSION file or overridden via builder.sh
 
 # **SOURCE_FILES**
 # Automatically find all .cpp files in the src directory recursively
@@ -41,8 +27,22 @@ file(GLOB_RECURSE SOURCE_FILES
 message(STATUS "Initial Project Configuration:")
 message(STATUS "  Project Name: ${PROJECT_NAME}")
 message(STATUS "  Executable Name: ${EXECUTABLE_NAME}")
-message(STATUS "  Project Version: ${PROJECT_VERSION}")
-message(STATUS "  Source Files: ${SOURCE_FILES}")
+# PROJECT_VERSION will be printed after it's determined
+if(NOT DEFINED PROJECT_VERSION)
+    # Read version from VERSION file
+    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
+    message(STATUS "Read version from VERSION file: ${PROJECT_VERSION}")
+else()
+    message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
+endif()
+
+# ----------------------------
+# Project Configuration
+# ----------------------------
+
+# Set the project name and version
+project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
+
 
 # ----------------------------
 # Option to Use Vcpkg
@@ -84,14 +84,26 @@ if(USE_VCPKG)
 else()
     find_package(ftxui REQUIRED)
 endif()
-# Find Packages and Components
-
 # ----------------------------
 # Include Directories
 # ----------------------------
 
 # Include directories for the project
 include_directories(${CMAKE_SOURCE_DIR}/include)
+
+# Add the build directory's include directory for generated headers
+include_directories(${CMAKE_BINARY_DIR}/include)
+
+# ----------------------------
+# Generate version.hpp
+# ----------------------------
+
+# Generate version.hpp from version.hpp.in
+configure_file(
+    "${CMAKE_SOURCE_DIR}/include/utils/version.hpp.in"
+    "${CMAKE_BINARY_DIR}/include/utils/version.hpp"
+    @ONLY
+)
 
 # ----------------------------
 # Add Executable
