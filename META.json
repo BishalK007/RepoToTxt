@@ -1,0 +1,16 @@
+{
+    "project_name": "repo-to-txt", 
+    "executable_name": "repototxt",
+    "description": "A C++ CLI tool for developers that allows you to copy and display repository content.",
+    "maintainer": {
+      "name": "Bishal Karmakar",
+      "email": "bishal@bishal.pro",
+      "githubUsername": "BishalK007"
+    },
+    "githubRepoUrl": "https://github.com/BishalK007/RepoToTxt",
+    "overlay_branch": "main",
+    "NIX_OVERLAY_FILE": ".nix/overlays/repototxt-overlay.nix",
+    "NIX_DEFAULT_FILE": ".nix/default.nix",
+    "NIX_SHELL_FILE": ".nix/shell.nix"
+}
+  

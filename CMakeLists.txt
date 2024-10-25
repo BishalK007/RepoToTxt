@@ -1,27 +1,24 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 # ----------------------------
-# Set Default Variables
+# Set Default Variables (Passed from builder.sh)
 # ----------------------------
 
-# **PROJECT_NAME**
-set(PROJECT_NAME "RepoToTxt" CACHE STRING "Name of the project")
+# PROJECT_NAME and EXECUTABLE_NAME are set via command-line arguments
+set(PROJECT_NAME "" CACHE STRING "Name of the project")
+set(EXECUTABLE_NAME "" CACHE STRING "Name of the executable")
 
-# **EXECUTABLE_NAME**
-set(EXECUTABLE_NAME "repototxt" CACHE STRING "Name of the executable")
-
-# **PROJECT_VERSION**
+# PROJECT_VERSION is set via command-line arguments or read from VERSION file
 if(NOT DEFINED PROJECT_VERSION)
-# Read version from VERSION file
-file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
+    file(STRINGS "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
 endif()
 
-# **MAINTAINER NAME**
-set(MAINTAINER_NAME "Bishal Karmakar" CACHE STRING "Name of maintainer")
+# MAINTAINER_NAME and MAINTAINER_MAIL are set via command-line arguments
+set(MAINTAINER_NAME "" CACHE STRING "Name of maintainer")
+set(MAINTAINER_MAIL "" CACHE STRING "E-Mail of maintainer")
 
-# **MAINTAINER EMAIL**
-set(MAINTAINER_MAIL "bishal@bishal.pro" CACHE STRING "E-Mail of maintainer")
-
+# HOMEPAGE is set via command-line arguments
+set(HOMEPAGE "" CACHE STRING "Project homepage")
 
 # ----------------------------
 # Optional: Print Configuration (Useful for Debugging)
@@ -31,14 +28,11 @@ set(MAINTAINER_MAIL "bishal@bishal.pro" CACHE STRING "E-Mail of maintainer")
 message(STATUS "Initial Project Configuration:")
 message(STATUS "  Project Name: ${PROJECT_NAME}")
 message(STATUS "  Executable Name: ${EXECUTABLE_NAME}")
-# PROJECT_VERSION will be printed after it's determined
 if(NOT DEFINED PROJECT_VERSION)
     message(STATUS "Read version from VERSION file: ${PROJECT_VERSION}")
 else()
     message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
 endif()
-
-
 
 # ----------------------------
 # Option to Use Vcpkg
@@ -72,7 +66,6 @@ project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-
 # ----------------------------
 # Source Files
 # ----------------------------
@@ -81,7 +74,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB_RECURSE SOURCE_FILES
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
 )
-
 
 # ----------------------------
 # Package Management
@@ -92,7 +84,6 @@ else()
     find_package(ftxui REQUIRED)
 endif()
 
-
 # ----------------------------
 # Include Directories
 # ----------------------------
@@ -102,7 +93,6 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Add the build directory's include directory for generated headers
 include_directories(${CMAKE_BINARY_DIR}/include)
-
 
 # ----------------------------
 # Generate version.hpp
@@ -115,14 +105,12 @@ configure_file(
     @ONLY
 )
 
-
 # ----------------------------
 # Add Executable
 # ----------------------------
 
 # Add the executable with the specified source files
 add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
-
 
 # ----------------------------
 # Link Libraries
@@ -133,7 +121,6 @@ else()
     target_link_libraries(${EXECUTABLE_NAME} PRIVATE ftxui::screen ftxui::dom ftxui::component)
 endif()
 # Link ftxui to the executable
-
 
 # ----------------------------
 # Final Configuration Summary
@@ -146,7 +133,6 @@ message(STATUS "  Executable Name: ${EXECUTABLE_NAME}")
 message(STATUS "  Project Version: ${PROJECT_VERSION}")
 message(STATUS "  Source Files: ${SOURCE_FILES}")
 message(STATUS "  Use Vcpkg: ${USE_VCPKG}")
-
 
 # ----------------------------
 # CPack Configuration for Debian Package
@@ -172,12 +158,12 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${MAINTAINER_NAME}") # Required for DEB
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.7), libstdc++6 (>= 5)")
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "A C++ CLI tool for developers that allows you to copy and display repository content.")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/BishalK007/cpp-vcpkg-template/")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${description}")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "${HOMEPAGE}")
 
 # Define installation directories
 install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
-install(FILES VERSION ReadMe.md DESTINATION /usr/share/doc/${PROJECT_NAME})
+install(FILES VERSION Readme.md DESTINATION /usr/share/doc/${PROJECT_NAME})
 
 # Include CPack configurations
 include(CPack)

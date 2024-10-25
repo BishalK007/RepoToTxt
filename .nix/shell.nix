@@ -8,6 +8,9 @@ pkgs.mkShell {
     pkgs.git
     pkgs.ftxui
     pkgs.jq
+    pkgs.zip
+    pkgs.pkg-config
+    pkgs.nix
   ];
 
   # Ensure the host's Git config is used
