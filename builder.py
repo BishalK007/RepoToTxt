@@ -71,22 +71,30 @@ def configure_project():
         f"-DUSE_VCPKG={USE_VCPKG}", 
         f"-DPROJECT_NAME={PROJECT_NAME}", 
         f"-DEXECUTABLE_NAME={EXECUTABLE_NAME}", 
-        f"-DPROJECT_VERSION={PROJECT_VERSION}"
+        f"-DPROJECT_VERSION={PROJECT_VERSION}",
+        f"-DDESCRIPTION={DESCRIPTION}",  # Add this line
+        f"-DMAINTAINER_NAME={MAINTAINER_NAME}",  # Add if needed
+        f"-DMAINTAINER_MAIL={MAINTAINER_EMAIL}",  # Add if needed
+        f"-DHOMEPAGE={GITHUB_REPO_URL}"  # Add if needed
     ]
     subprocess.run(cmake_command, check=True)
 
     log_info("CMake configuration complete.")
 
 # Function to build the project
-def build_project():
-    log_info("Building project...")
+def build_project(build_type="Debug"):
+    log_info(f"Building project in {build_type} mode...")
 
     if not os.path.isdir(BUILD_DIR):
         log_info("Build directory not found. Configuring project...")
         configure_project()
     
-    build_command = ["cmake", "--build", BUILD_DIR]
+    build_command = ["cmake", "--build", BUILD_DIR, "--config", build_type]
     subprocess.run(build_command, check=True)
+
+    if build_type == "Release":
+        cpack_command = ["cpack", "-G", "NSIS"]
+    subprocess.run(cpack_command, cwd=BUILD_DIR, check=True)
 
     log_info("Build complete.")
 
@@ -153,7 +161,6 @@ def generate_vcpkg_json():
     
     log_info(f"{output_file} has been updated and {template_file} has been deleted.")
 
-
 # Command-line argument parsing
 def parse_args():
     parser = argparse.ArgumentParser(description="Windows Build Automation Script")
@@ -164,6 +171,7 @@ def parse_args():
     parser.add_argument("--exe", type=str, help="Specify the name of the executable")
     parser.add_argument("--proj", type=str, help="Specify the project name")
     parser.add_argument("--ver", type=str, help="Specify the project version")
+    parser.add_argument("--create-exe", action="store_true", help="Build the project in Release mode and create a .exe installer")
     args = parser.parse_args()
     return args
 
@@ -185,7 +193,6 @@ if __name__ == "__main__":
         PROJECT_VERSION = args.ver
         PROJECT_TEMP_OVERRIDDEN = "1"
 
-    
     if args.conf:
         configure_project()
     
@@ -197,3 +204,7 @@ if __name__ == "__main__":
     
     if args.zip:
         zip_files()
+    
+    if args.create_exe:
+        # Build in release mode to create the .exe file
+        build_project("Release")

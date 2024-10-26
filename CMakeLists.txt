@@ -20,6 +20,9 @@ set(MAINTAINER_MAIL "" CACHE STRING "E-Mail of maintainer")
 # HOMEPAGE is set via command-line arguments
 set(HOMEPAGE "" CACHE STRING "Project homepage")
 
+# DESCRIPTION is set via command-line arguments
+set(DESCRIPTION "" CACHE STRING "Project description")
+
 # ----------------------------
 # Optional: Print Configuration (Useful for Debugging)
 # ----------------------------
@@ -28,11 +31,11 @@ set(HOMEPAGE "" CACHE STRING "Project homepage")
 message(STATUS "Initial Project Configuration:")
 message(STATUS "  Project Name: ${PROJECT_NAME}")
 message(STATUS "  Executable Name: ${EXECUTABLE_NAME}")
-if(NOT DEFINED PROJECT_VERSION)
-    message(STATUS "Read version from VERSION file: ${PROJECT_VERSION}")
-else()
-    message(STATUS "Using provided PROJECT_VERSION: ${PROJECT_VERSION}")
-endif()
+message(STATUS "  Project Version: ${PROJECT_VERSION}")
+message(STATUS "  Maintainer Name: ${MAINTAINER_NAME}")
+message(STATUS "  Maintainer Mail: ${MAINTAINER_MAIL}")
+message(STATUS "  Homepage: ${HOMEPAGE}")
+message(STATUS "  Description: ${DESCRIPTION}")
 
 # ----------------------------
 # Option to Use Vcpkg
@@ -79,7 +82,7 @@ file(GLOB_RECURSE SOURCE_FILES
 # Package Management
 # ----------------------------
 if(USE_VCPKG)
-    find_package(ftxui REQUIRED)
+    find_package(ftxui CONFIG REQUIRED)
 else()
     find_package(ftxui REQUIRED)
 endif()
@@ -135,35 +138,107 @@ message(STATUS "  Source Files: ${SOURCE_FILES}")
 message(STATUS "  Use Vcpkg: ${USE_VCPKG}")
 
 # ----------------------------
-# CPack Configuration for Debian Package
+# CPack Configuration
 # ----------------------------
 
-# Set CPack configurations
-set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
-set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-set(CPACK_PACKAGE_CONTACT "${MAINTAINER_MAIL}")
+if(WIN32)
+    # CPack configuration for Windows (NSIS)
+    set(CPACK_GENERATOR "NSIS")
+    set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+    set(CPACK_NSIS_PACKAGE_NAME "${PROJECT_NAME}")
+    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${DESCRIPTION}")
+    set(CPACK_PACKAGE_VENDOR "${MAINTAINER_NAME}")
+    set(CPACK_PACKAGE_CONTACT "${MAINTAINER_MAIL}")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "${PROJECT_NAME}")
+    set (CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 
-# Specify the generator for Debian packages
-set(CPACK_GENERATOR "DEB")
+    # Enable Unicode in NSIS Installer
+    set(CPACK_NSIS_ENABLE_UNICODE ON)
 
-# Debian-specific package configurations
-# Correct the architecture to "amd64" instead of using CMAKE_SYSTEM_PROCESSOR
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-else()
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+    # Include the EnVar plugin
+    # Tell NSIS to include plugins from the $PLUGINSDIR and set Unicode mode
+    set(CPACK_NSIS_EXTRA_PREDEFINES "
+        Unicode true
+        !addplugindir '\$PLUGINSDIR'
+    ")
+
+    # Find makensis.exe
+    find_program(NSIS_MAKENSIS_EXECUTABLE makensis)
+
+    if(NOT NSIS_MAKENSIS_EXECUTABLE)
+        message(FATAL_ERROR "makensis not found. Please install NSIS and ensure makensis is in your PATH.")
+    endif()
+
+    # Determine NSIS install directory
+    get_filename_component(NSIS_INSTALL_DIR "${NSIS_MAKENSIS_EXECUTABLE}" DIRECTORY)
+
+
+    # Path to EnVar.dll in NSIS plugins directory
+    set(ENVAR_DLL_SOURCE_UNICODE "${NSIS_INSTALL_DIR}/Plugins/x86-unicode/EnVar.dll")
+
+    message(STATUS "DLL SOURCE::  ${ENVAR_DLL_SOURCE_UNICODE}")
+
+    if(EXISTS "${ENVAR_DLL_SOURCE_UNICODE}")
+        set(ENVAR_DLL_SOURCE "${ENVAR_DLL_SOURCE_UNICODE}")
+        message(STATUS "Using Unicode EnVar.dll at ${ENVAR_DLL_SOURCE}")
+    else()
+        message(FATAL_ERROR "Unicode EnVar.dll not found in NSIS plugins directory. Ensure the EnVar plugin is installed in x86-unicode.")
+    endif()
+
+    # Copy EnVar.dll to build directory
+    configure_file(
+        "${ENVAR_DLL_SOURCE}"
+        "${CMAKE_CURRENT_BINARY_DIR}/EnVar.dll"
+        COPYONLY
+    )
+
+    # Include EnVar.dll in the installer
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EnVar.dll" DESTINATION "$PLUGINSDIR")
+
+    set(PATH_INSTALL_COMMANDS "
+        EnVar::SetHKCU
+        EnVar::Check \\\"Path\\\" \\\"\\\$INSTDIR\\\\bin\\\"
+        Pop \\\$0
+        \\\${If} \\\$0 = 0
+            DetailPrint \\\"Path Already there\\\"
+        \\\${Else}
+            EnVar::AddValue \\\"Path\\\" \\\"$InstDir\\\\bin\\\"
+            Pop \\\$0 ; 0 on success
+        \\\${EndIf}
+    ")
+    set(PATH_UNINSTALL_COMMANDS "
+        EnVar::SetHKCU
+        EnVar::DeleteValue \\\"Path\\\" \\\"$INSTDIR\\\\bin\\\"
+        Pop \\\$0
+    ")
+
+
+
+    # Set the extra install and uninstall commands
+    set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${PATH_INSTALL_COMMANDS}")
+    set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "${PATH_UNINSTALL_COMMANDS}")
+
+    # Installation directories
+    install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
+    install(FILES VERSION Readme.md DESTINATION doc)
+elseif(UNIX)
+    # CPack configuration for Unix-like systems (DEB)
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+    set(CPACK_PACKAGE_CONTACT "${MAINTAINER_MAIL}")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${MAINTAINER_NAME}")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.7), libstdc++6 (>= 5)")
+    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${DESCRIPTION}")
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "${HOMEPAGE}")
+
+    # Installation directories
+    install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
+    install(FILES VERSION Readme.md DESTINATION "share/doc/${PROJECT_NAME}")
 endif()
 
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${MAINTAINER_NAME}") # Required for DEB
-set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
-set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.7), libstdc++6 (>= 5)")
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${description}")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "${HOMEPAGE}")
-
-# Define installation directories
-install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
-install(FILES VERSION Readme.md DESTINATION /usr/share/doc/${PROJECT_NAME})
-
-# Include CPack configurations
+# Include CPack module
 include(CPack)
